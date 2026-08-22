@@ -1,0 +1,242 @@
+---
+/**
+ * SHARED LIGHTBOX
+ * ---------------------------------------------------------------------------
+ * One <dialog> serves both the floorplan viewer and the gallery.
+ *
+ * Progressive enhancement: every trigger is a real <a href="{image}">, so
+ * without JavaScript the image simply opens in a new tab. With JavaScript the
+ * anchor is intercepted and the image opens here instead.
+ *
+ * Accessibility: the native <dialog> gives us Escape-to-close, focus trapping
+ * and inertness of the rest of the page for free. Arrow keys move between
+ * images in the same group; a horizontal swipe does the same on touch.
+ *
+ * Triggers opt in with:
+ *   <a href="/full.jpg" data-lightbox="gallery" data-lb-caption="…">
+ */
+---
+
+<dialog class="lightbox" id="lightbox" aria-label="Image viewer">
+  <div class="lightbox__bar">
+    <p class="lightbox__caption" id="lightbox-caption"></p>
+    <div class="lightbox__controls">
+      <button type="button" class="lightbox__btn" data-lb-prev>
+        <span aria-hidden="true">&#8592;</span>
+        <span class="visually-hidden">Previous image</span>
+      </button>
+      <span class="lightbox__count" data-lb-count aria-live="polite"></span>
+      <button type="button" class="lightbox__btn" data-lb-next>
+        <span aria-hidden="true">&#8594;</span>
+        <span class="visually-hidden">Next image</span>
+      </button>
+      <button type="button" class="lightbox__btn lightbox__btn--close" data-lb-close>
+        <span aria-hidden="true">&times;</span>
+        <span class="visually-hidden">Close image viewer</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- tabindex="0": a full-size floorplan can overflow this box, and a
+       scrollable region must be focusable to be usable from the keyboard. -->
+  <div class="lightbox__stage" tabindex="0">
+    <img id="lightbox-image" alt="" />
+  </div>
+
+  <p class="lightbox__foot fineprint" data-lb-foot></p>
+</dialog>
+
+<style>
+  .lightbox {
+    width: min(96vw, 1180px);
+    max-width: 96vw;
+    max-height: 94dvh;
+    padding: 0;
+    border: 0;
+    border-radius: var(--card-radius);
+    background: var(--c-paper);
+    color: var(--c-ink-2);
+    overflow: hidden;
+  }
+
+  .lightbox::backdrop {
+    background: rgb(16 15 14 / 0.82);
+  }
+
+  .lightbox[open] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  .lightbox__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--c-line);
+    background: var(--c-paper);
+  }
+
+  .lightbox__caption {
+    margin: 0;
+    font-size: var(--step--1);
+    color: var(--c-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lightbox__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex: none;
+  }
+
+  .lightbox__btn {
+    width: 44px;
+    height: 44px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--c-ink);
+    background: var(--c-paper);
+    transition: border-color var(--dur) var(--ease);
+  }
+
+  .lightbox__btn:hover {
+    border-color: var(--c-accent);
+  }
+
+  .lightbox__btn[hidden] {
+    display: none;
+  }
+
+  .lightbox__count {
+    font-size: var(--step--2);
+    color: var(--c-ink-4);
+    min-width: 3.5rem;
+    text-align: center;
+  }
+
+  .lightbox__stage {
+    display: grid;
+    scroll-behavior: auto;
+    place-items: center;
+    padding: var(--sp-4);
+    background: var(--c-stone);
+    overflow: auto;
+  }
+
+  .lightbox__stage img {
+    max-width: 100%;
+    max-height: calc(94dvh - 9rem);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    background: #fff;
+  }
+
+  .lightbox__foot {
+    margin: 0;
+    padding: var(--sp-3) var(--sp-4);
+    border-top: 1px solid var(--c-line);
+  }
+</style>
+
+<script>
+  const dialog = document.getElementById('lightbox') as HTMLDialogElement | null;
+  const image = document.getElementById('lightbox-image') as HTMLImageElement | null;
+  const caption = document.getElementById('lightbox-caption');
+  const countEl = dialog?.querySelector<HTMLElement>('[data-lb-count]');
+  const footEl = dialog?.querySelector<HTMLElement>('[data-lb-foot]');
+  const prevBtn = dialog?.querySelector<HTMLButtonElement>('[data-lb-prev]');
+  const nextBtn = dialog?.querySelector<HTMLButtonElement>('[data-lb-next]');
+  const closeBtn = dialog?.querySelector<HTMLButtonElement>('[data-lb-close]');
+
+  let group: HTMLAnchorElement[] = [];
+  let index = 0;
+
+  function render() {
+    const trigger = group[index];
+    if (!trigger || !image) return;
+    image.src = trigger.href;
+    image.alt = trigger.dataset.lbAlt || trigger.querySelector('img')?.alt || '';
+    if (caption) caption.textContent = trigger.dataset.lbCaption || '';
+    if (footEl) footEl.textContent = trigger.dataset.lbFoot || '';
+    if (countEl) countEl.textContent = group.length > 1 ? `${index + 1} / ${group.length}` : '';
+    const single = group.length < 2;
+    if (prevBtn) prevBtn.hidden = single;
+    if (nextBtn) nextBtn.hidden = single;
+  }
+
+  function step(delta: number) {
+    if (group.length < 2) return;
+    index = (index + delta + group.length) % group.length;
+    render();
+  }
+
+  document.addEventListener('click', (event) => {
+    const trigger = (event.target as HTMLElement | null)?.closest<HTMLAnchorElement>(
+      'a[data-lightbox]'
+    );
+    if (!trigger || !dialog || typeof dialog.showModal !== 'function') return;
+
+    event.preventDefault();
+    const name = trigger.dataset.lightbox!;
+    group = Array.from(document.querySelectorAll<HTMLAnchorElement>(`a[data-lightbox="${name}"]`));
+    index = Math.max(0, group.indexOf(trigger));
+    render();
+    dialog.showModal();
+  });
+
+  prevBtn?.addEventListener('click', () => step(-1));
+  nextBtn?.addEventListener('click', () => step(1));
+  closeBtn?.addEventListener('click', () => dialog?.close());
+
+  // Escape is handled natively by <dialog>; arrows are ours.
+  dialog?.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      step(-1);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      step(1);
+    }
+  });
+
+  // Click the backdrop to close.
+  dialog?.addEventListener('click', (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  // Return focus to the trigger that opened the viewer.
+  dialog?.addEventListener('close', () => {
+    group[index]?.focus();
+  });
+
+  // Touch: horizontal swipe changes image.
+  let touchStartX = 0;
+  let touchStartY = 0;
+  dialog?.addEventListener(
+    'touchstart',
+    (event) => {
+      touchStartX = event.changedTouches[0]!.clientX;
+      touchStartY = event.changedTouches[0]!.clientY;
+    },
+    { passive: true }
+  );
+  dialog?.addEventListener(
+    'touchend',
+    (event) => {
+      const dx = event.changedTouches[0]!.clientX - touchStartX;
+      const dy = event.changedTouches[0]!.clientY - touchStartY;
+      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.6) step(dx < 0 ? 1 : -1);
+    },
+    { passive: true }
+  );
+</script>

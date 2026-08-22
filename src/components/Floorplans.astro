@@ -1,0 +1,350 @@
+---
+/**
+ * FLOORPLANS + UNIT AVAILABILITY
+ * ---------------------------------------------------------------------------
+ * A horizontal carousel of the six headline unit sizes, driven by the shared
+ * grouping in utils/unitGroups.ts — the same source the Price table reads, so
+ * the two sections cannot disagree.
+ *
+ * Six cards in a row is a shape people know how to use, and it keeps the
+ * section short. The scrolling mechanism lives in Carousel.astro.
+ *
+ * HONESTY RULES BAKED IN
+ * - `unitsLeft: null` renders as "On request", never as a guessed number.
+ * - A group's count is the sum of its types, and is only unknown when every
+ *   type in it is unknown — a known zero is not the same as an unknown.
+ * - Each card names the developer's own types inside the group, so nothing is
+ *   hidden by the consolidation.
+ * - Availability is stamped with the date it was taken and never presented as
+ *   live. It is the fastest-moving fact on the page.
+ * - Sold-out types are still shown. Hiding them would misrepresent the mix.
+ * - Status is conveyed in words, never by colour alone.
+ */
+import SectionHeader from './SectionHeader.astro';
+import Carousel from './Carousel.astro';
+import { project, verified } from '../data/project';
+import { site } from '../data/site';
+import { formatDate, isoDate } from '../utils/format';
+import { unitGroups, areaRange } from '../utils/unitGroups';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const { availability } = project;
+
+const cards = unitGroups();
+
+/**
+ * Every plan sheet is exported onto one canvas, so a single pair of dimensions
+ * is correct for all of them. They are attributes, not styling — they reserve
+ * the box before the image arrives and hold layout shift at zero.
+ */
+const PLAN_WIDTH = 1080;
+const PLAN_HEIGHT = 1160;
+
+const asAt = formatDate(availability.asAt);
+const asAtIso = isoDate(availability.asAt);
+
+/** "12 units left" / "Sold out" / "On request" — the label carries the meaning. */
+function statusLabel(left: number | null): string {
+  if (left === null) return 'On request';
+  if (left === 0) return 'Sold out';
+  return `${left} unit${left === 1 ? '' : 's'} left`;
+}
+function statusKind(left: number | null): 'available' | 'sold' | 'unknown' {
+  if (left === null) return 'unknown';
+  return left === 0 ? 'sold' : 'available';
+}
+---
+
+<section class="section section--alt" id="floorplans" aria-labelledby="floorplans-title">
+  <div class="container">
+    <SectionHeader eyebrow="Floorplans" title="Unit types and availability" id="floorplans-title" />
+
+    <Carousel label={`Unit types at ${projectName}`}>
+      <ul class="fp-list">
+        {
+          cards.map((card) => (
+            <li class={`fp-card${card.unitsLeft === 0 ? ' is-sold' : ''}`}>
+              <a
+                class="fp-card__plan"
+                href={card.sheets[0].image}
+                data-lightbox="floorplans"
+                data-lb-caption={`${card.name} — Type ${card.sheets[0].label}`}
+                data-lb-alt={`Developer floorplan sheet, Type ${card.sheets[0].label}, ${card.name} at ${projectName}`}
+                data-lb-foot={site.legal.floorplanDisclaimer}
+              >
+                <img
+                  src={card.sheets[0].image}
+                  width={PLAN_WIDTH}
+                  height={PLAN_HEIGHT}
+                  alt={`Developer floorplan sheet, Type ${card.sheets[0].label}, ${card.name} at ${projectName}`}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span class="fp-card__zoom" aria-hidden="true">
+                  &#10530; Enlarge
+                </span>
+                <span class="visually-hidden">Enlarge the {card.name} floorplans</span>
+              </a>
+
+              <div class="fp-card__body">
+                <h3 class="fp-card__title">{card.name}</h3>
+                <p class="fp-card__area">{areaRange(card)}</p>
+                {card.includes.length > 1 && (
+                  <p class="fp-card__includes">{card.includes.join(' · ')}</p>
+                )}
+                <span class={`badge badge--${statusKind(card.unitsLeft)}`}>
+                  {statusLabel(card.unitsLeft)}
+                </span>
+
+                {/*
+                  Every sheet in the group, by the developer's own layout code.
+                  These were previously visually hidden, which made the other
+                  sheets reachable only by guessing that arrow keys would work.
+                  A buyer asks for "the C3a plan" by name, so the codes are the
+                  labels.
+                */}
+                <p class="fp-card__sheets">
+                  <span class="fp-card__sheets-label">Plans</span>
+                  {/*
+                    The first sheet is the one on the card, opened by the
+                    thumbnail above — so it is named but not linked. Linking it
+                    again would put a duplicate entry in the lightbox group and
+                    make the arrow keys visit the same plan twice.
+                  */}
+                  <span class="fp-card__sheet is-current">
+                    {card.sheets[0].label}
+                    <span class="visually-hidden"> floorplan, shown above</span>
+                  </span>
+                  {card.sheets.slice(1).map((sheet) => (
+                    <a
+                      class="fp-card__sheet"
+                      href={sheet.image}
+                      data-lightbox="floorplans"
+                      data-lb-caption={`${card.name} — Type ${sheet.label}`}
+                      data-lb-alt={`Developer floorplan sheet, Type ${sheet.label}, ${card.name} at ${projectName}`}
+                      data-lb-foot={site.legal.floorplanDisclaimer}
+                    >
+                      {sheet.label}
+                      <span class="visually-hidden"> floorplan</span>
+                    </a>
+                  ))}
+                </p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </Carousel>
+
+    {
+      /*
+      The disclaimer sentence is gone from here — it still travels with every
+      plan, as the footer line inside the lightbox, and in full on /disclaimer.
+      What stays is the date stamp: availability is the fastest-moving fact on
+      this page and must never read as live.
+    */
+    }
+    {
+      asAt && (
+        <p class="fineprint fp-foot">
+          Availability as at <time datetime={asAtIso ?? undefined}>{asAt}</time>.
+        </p>
+      )
+    }
+
+    <div class="fp-cta">
+      <a
+        class="btn"
+        href="#contact"
+        data-track="request_floorplans"
+        data-track-location="floorplans"
+      >
+        Request Full Floorplan Collection
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .fp-list {
+    display: flex;
+    gap: var(--sp-4);
+    /* Cards keep their own height rather than stretching to the tallest, but
+       align at the top so the row of plans reads as one band. */
+    align-items: stretch;
+  }
+
+  .fp-card {
+    /*
+     * position: relative is load-bearing, not decoration. The extra sheet links
+     * are .visually-hidden, i.e. position:absolute with no offsets — so without
+     * a positioned ancestor their containing block is the page itself, and an
+     * absolutely positioned box is NOT clipped by an ancestor that is not its
+     * containing block. They therefore sat at their static x inside the scroll
+     * track, hundreds of pixels off-screen, and dragged the whole document into
+     * horizontal overflow. Making the card their containing block puts them
+     * back inside the track's clip.
+     */
+    position: relative;
+    flex: 0 0 auto;
+    width: min(78vw, 17rem);
+    scroll-snap-align: start;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    background: var(--card-bg);
+    border: 1px solid var(--c-line);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+  }
+
+  /* ---- Cards ---- */
+
+  .fp-card__plan {
+    position: relative;
+    display: block;
+    background: #fff;
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  .fp-card__plan img {
+    width: 100%;
+    /* One height for every card: the sheets share an aspect ratio, so the row
+       stays even whatever the plan inside. */
+    height: 13rem;
+    object-fit: contain;
+    padding: var(--sp-3);
+    background: #fff;
+  }
+
+  .fp-card__sheets {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-2);
+    margin-top: var(--sp-3);
+  }
+
+  .fp-card__sheets-label {
+    font-size: var(--step--2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-ink-3, var(--c-ink-2));
+  }
+
+  .fp-card__sheet {
+    display: inline-block;
+    padding: 0.15em 0.55em;
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--radius-sm);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+    text-decoration: none;
+    color: var(--c-ink-2);
+    background: var(--c-paper);
+  }
+
+  .fp-card__sheet.is-current {
+    border-style: dashed;
+    color: var(--c-ink-3, var(--c-ink-2));
+  }
+
+  a.fp-card__sheet:hover,
+  a.fp-card__sheet:focus-visible {
+    border-color: var(--c-accent);
+    color: var(--c-accent-ink);
+  }
+
+  .fp-card__zoom {
+    position: absolute;
+    right: var(--sp-3);
+    bottom: var(--sp-3);
+    padding: 0.3em 0.7em;
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--c-paper);
+    font-size: var(--step--2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--c-ink-2);
+    opacity: 0;
+    transition: opacity var(--dur) var(--ease);
+  }
+
+  .fp-card__plan:hover .fp-card__zoom,
+  .fp-card__plan:focus-visible .fp-card__zoom {
+    opacity: 1;
+  }
+
+  .fp-card__body {
+    display: grid;
+    justify-items: start;
+    align-content: start;
+    gap: var(--sp-2);
+    padding: var(--sp-4);
+  }
+
+  .fp-card__body .badge {
+    margin-top: auto;
+  }
+
+  .fp-card__title {
+    font-size: var(--step-1);
+    line-height: 1.15;
+  }
+
+  .fp-card__area {
+    font-size: var(--step--1);
+    color: var(--c-ink-3);
+  }
+
+  /* The developer's own type names, so consolidating to six sizes does not
+     hide that a "3 Bedroom" covers Study, Dual Key and Flex variants. */
+  .fp-card__includes {
+    font-size: var(--step--2);
+    line-height: 1.45;
+    color: var(--c-ink-4);
+  }
+
+  .fp-card.is-sold .fp-card__title {
+    color: var(--c-ink-3);
+  }
+
+  /*
+   * Green for available, red for sold out. Colour is reinforcement only — the
+   * badge always spells the status out, so meaning survives for anyone who
+   * cannot distinguish the two. Both clear 4.5:1 on the card.
+   */
+  .badge--available {
+    border-color: color-mix(in srgb, var(--c-positive) 50%, transparent);
+    color: var(--c-positive);
+    background: color-mix(in srgb, var(--c-positive) 10%, transparent);
+  }
+
+  .badge--sold {
+    border-color: color-mix(in srgb, var(--c-negative) 45%, transparent);
+    color: var(--c-negative);
+    background: color-mix(in srgb, var(--c-negative) 9%, transparent);
+  }
+
+  .badge--unknown {
+    color: var(--c-accent-ink);
+  }
+
+  .badge--sold::before,
+  .badge--unknown::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+
+  .fp-foot {
+    margin-top: var(--sp-7);
+  }
+
+  .fp-cta {
+    margin-top: var(--sp-6);
+  }
+</style>

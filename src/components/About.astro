@@ -1,0 +1,133 @@
+---
+/**
+ * ABOUT — project overview + quick facts + buyer considerations.
+ * Copy comes from project.content.overview. Write it yourself; do not paste
+ * developer, brochure or portal text.
+ */
+import SectionHeader from './SectionHeader.astro';
+import { project, verified, isPlaceholder } from '../data/project';
+import { interpolate } from '../utils/format';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const location = verified(project.locality) ?? verified(project.district) ?? '[LOCATION]';
+
+const paragraphs = project.content.overview
+  .filter((t) => !isPlaceholder(t))
+  .map((p) => interpolate(p, { 'PROJECT NAME': projectName, LOCATION: location }));
+
+/*
+ * Rendered only when there is something to render. Editorial notes to the site
+ * owner are not content, so anything still holding a [PLACEHOLDER] is dropped
+ * rather than printed.
+ */
+const considerations = project.content.buyerConsiderations.filter((t) => !isPlaceholder(t));
+const media = project.media;
+---
+
+<section class="section" id="about" aria-labelledby="about-title">
+  <div class="container">
+    <SectionHeader eyebrow="The development" title={`About ${projectName}`} id="about-title" />
+
+    <div class="about__grid">
+      <div class="about__body reveal">
+        <div class="prose">
+          {paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+
+        <figure class="about__figure">
+          <img
+            src={media.aboutImage}
+            width={media.aboutImageWidth}
+            height={media.aboutImageHeight}
+            alt={media.aboutImageAlt}
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption class="fineprint">Artist’s impression</figcaption>
+        </figure>
+
+        {
+          considerations.length > 0 && (
+            <div class="about__considerations">
+              <h3 class="about__subtitle">Points worth weighing before you commit</h3>
+              <ul class="checklist">
+                {considerations.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about__grid {
+    display: grid;
+    gap: var(--sp-7);
+  }
+
+  .about__body {
+    display: grid;
+    gap: var(--sp-6);
+  }
+
+  .about__figure {
+    margin: 0;
+  }
+
+  .about__figure img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--image-radius);
+  }
+
+  .about__figure figcaption {
+    margin-top: var(--sp-3);
+  }
+
+  .about__subtitle {
+    font-size: var(--step-2);
+    margin-bottom: var(--sp-4);
+  }
+
+  .checklist {
+    display: grid;
+    gap: var(--sp-3);
+    max-width: var(--measure);
+  }
+
+  .checklist li {
+    position: relative;
+    padding-left: 1.75rem;
+    color: var(--c-ink-2);
+  }
+
+  .checklist li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.65em;
+    width: 0.85rem;
+    height: 1px;
+    background: var(--c-accent);
+  }
+
+  /*
+   * Single column since the Quick Facts card was removed. Without a measure
+   * cap the paragraphs would run the full container width and become hard to
+   * track from one line to the next.
+   */
+  .about__body .prose {
+    max-width: var(--measure);
+  }
+
+  @media (min-width: 62rem) {
+    .about__figure img {
+      max-height: 32rem;
+      object-fit: cover;
+    }
+  }
+</style>

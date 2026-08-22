@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 900" width="720" height="900" role="img" aria-label="PROFILE IMAGE">
+  <rect width="720" height="900" fill="#e8e2d6"/>
+  <g fill="none" stroke="#8a6a3b" stroke-opacity="0.35" stroke-width="1">
+    <rect x="12" y="12" width="696" height="876"/>
+  </g>
+  <g font-family="Georgia, 'Times New Roman', serif" text-anchor="middle">
+    <text x="360.0" y="441.0" font-size="45" fill="#3b3934">PROFILE IMAGE</text>
+    <text x="360.0" y="499.5" font-size="23" fill="#8a8578" font-family="ui-sans-serif, system-ui, sans-serif" letter-spacing="1.5">REPLACE — 720 × 900</text>
+  </g>
+</svg>

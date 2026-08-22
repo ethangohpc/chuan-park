@@ -1,0 +1,91 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../data/site';
+import { project, verified } from '../data/project';
+
+const projectName = verified(project.name) ?? 'the project';
+---
+
+<BaseLayout
+  title="Page not found"
+  description="The page you were looking for could not be found."
+  pathname="/404"
+  indexable={false}
+  showSectionNav={false}
+>
+  <section class="section notfound">
+    <div class="container container--narrow">
+      <p class="eyebrow">Error 404</p>
+      <h1 class="notfound__title">That page could not be found.</h1>
+      <p class="notfound__lead">
+        The address may have changed, or the link may be out of date. Everything about {projectName} is
+        on the main page.
+      </p>
+
+      <div class="cluster notfound__actions">
+        <a class="btn" href="/">Back to the main page</a>
+        <a class="btn btn--secondary" href="/#contact">Book a showflat appointment</a>
+      </div>
+
+      <nav class="notfound__nav" aria-label="Main sections">
+        <h2 class="notfound__subtitle">Jump to a section</h2>
+        <ul>
+          {
+            site.navigation.map((item) => (
+              <li>
+                <a class="link" href={`/${item.href}`}>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .notfound {
+    min-height: 60vh;
+  }
+
+  .notfound__title {
+    font-size: var(--step-4);
+    margin-block: var(--sp-3) var(--sp-4);
+  }
+
+  .notfound__lead {
+    font-size: var(--step-1);
+    color: var(--c-ink-3);
+    max-width: 52ch;
+  }
+
+  .notfound__actions {
+    margin-top: var(--sp-6);
+  }
+
+  .notfound__nav {
+    margin-top: var(--sp-7);
+    padding-top: var(--sp-5);
+    border-top: 1px solid var(--c-line);
+  }
+
+  .notfound__subtitle {
+    font-family: var(--font-sans);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--c-ink-4);
+    margin-bottom: var(--sp-4);
+  }
+
+  .notfound__nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3) var(--sp-5);
+  }
+</style>

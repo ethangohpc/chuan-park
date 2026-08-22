@@ -1,0 +1,34 @@
+{
+  // ---------------------------------------------------------------------------
+  // Cloudflare Workers configuration.
+  //
+  // `main` and `assets` are deliberately NOT set here. The Astro adapter fills
+  // them in and writes the deployable config to dist/server/wrangler.json during
+  // the build — pointing `main` at dist/server/entry.mjs from this file breaks
+  // the build, because that file does not exist until the build has finished.
+  //
+  // Deploy with:  npx wrangler deploy
+  //
+  // Secrets (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TURNSTILE_SECRET_KEY) are NOT
+  // listed here — set them in the dashboard under Settings → Variables and
+  // Secrets, or with `npx wrangler secret put NAME`. Only non-secret values
+  // belong in `vars`, because this file is committed to the repository.
+  // ---------------------------------------------------------------------------
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "chuan-park",
+  "compatibility_date": "2026-04-15",
+
+  // nodejs_compat lets the Worker use the Node built-ins Astro's server output
+  // expects. Without it the Worker fails to boot.
+  "compatibility_flags": ["nodejs_compat"],
+
+  "vars": {
+    // Not a secret: it only selects which delivery adapter runs. The bot token
+    // and chat id it needs are secrets, set in the dashboard.
+    "LEAD_DELIVERY_MODE": "telegram",
+  },
+
+  "observability": {
+    "enabled": true,
+  },
+}

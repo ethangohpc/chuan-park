@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# robots.txt
+#
+# Google AdsBot is allowed explicitly. If AdsBot is blocked, Google Ads cannot
+# crawl the landing page and ads can be disapproved for a destination-not-
+# working / policy issue. Do not add a Disallow for these agents.
+# ---------------------------------------------------------------------------
+
+User-agent: AdsBot-Google
+Allow: /
+
+User-agent: AdsBot-Google-Mobile
+Allow: /
+
+User-agent: AdsBot-Google-Mobile-Apps
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /thank-you
+
+# Update the host below to the production domain before launch.
+Sitemap: https://example.com/sitemap-index.xml

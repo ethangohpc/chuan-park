@@ -1,0 +1,104 @@
+---
+/**
+ * WHATSAPP / CALL / EMAIL BUTTON GROUP
+ * ---------------------------------------------------------------------------
+ * One definition, used by the contact section and the adviser page, so the
+ * WhatsApp mark and its colour cannot drift apart between the two.
+ *
+ * Every button renders only when the underlying detail is configured in
+ * agent.ts. A button that opens nothing is worse than no button.
+ */
+import { agent, telHref, whatsappHref, mailtoHref } from '../data/agent';
+import { project, verified } from '../data/project';
+import { interpolate } from '../utils/format';
+
+interface Props {
+  /** Which whatsappMessages entry to pre-fill. */
+  message?: keyof typeof project.contact.whatsappMessages;
+  /** Goes into data-track-location, so clicks are attributable to a section. */
+  location: string;
+  showEmail?: boolean;
+}
+
+const { message = 'general', location, showEmail = false } = Astro.props;
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const wa = whatsappHref(
+  interpolate(project.contact.whatsappMessages[message], { 'PROJECT NAME': projectName })
+);
+const tel = telHref();
+const mail = showEmail ? mailtoHref(`Enquiry — ${projectName}`) : null;
+---
+
+<div class="contact-buttons">
+  {
+    wa && (
+      <a
+        class="btn btn--whatsapp"
+        href={wa}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-track="click_whatsapp"
+        data-track-location={location}
+      >
+        <svg class="btn__glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            fill="currentColor"
+            d="M12.04 2A9.9 9.9 0 0 0 2.13 11.9c0 1.75.46 3.46 1.32 4.96L2 22l5.28-1.38a9.86 9.86 0 0 0 4.76 1.21h.01a9.9 9.9 0 0 0 9.9-9.9A9.9 9.9 0 0 0 12.04 2m0 18.15h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.22 8.22 0 0 1-1.26-4.39 8.23 8.23 0 1 1 8.23 8.25m4.52-6.16c-.25-.12-1.47-.72-1.69-.8s-.4-.13-.56.13-.64.8-.79.97-.29.19-.54.06a6.7 6.7 0 0 1-3.35-2.93c-.25-.44.25-.4.72-1.36a.46.46 0 0 0-.02-.43c-.07-.12-.56-1.34-.76-1.84s-.4-.41-.56-.42h-.47a.9.9 0 0 0-.66.31 2.76 2.76 0 0 0-.86 2.05 4.8 4.8 0 0 0 1 2.54 10.98 10.98 0 0 0 4.21 3.72c1.56.68 2.18.73 2.96.62.48-.07 1.47-.6 1.67-1.19s.2-1.08.15-1.19-.23-.18-.48-.3"
+          />
+        </svg>
+        <span>WhatsApp {agent.displayName}</span>
+        <span class="visually-hidden">(opens WhatsApp in a new tab)</span>
+      </a>
+    )
+  }
+
+  {
+    tel && (
+      <a
+        class="btn btn--secondary btn--plain"
+        href={tel}
+        data-track="click_call"
+        data-track-location={location}
+      >
+        <svg class="btn__glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6.6 3.5h-2A1.6 1.6 0 0 0 3 5.1 15.9 15.9 0 0 0 18.9 21a1.6 1.6 0 0 0 1.6-1.6v-2a1.6 1.6 0 0 0-1.3-1.6l-2.2-.4a1.6 1.6 0 0 0-1.6.7l-.7 1a12.3 12.3 0 0 1-5.1-5.1l1-.7a1.6 1.6 0 0 0 .7-1.6l-.4-2.2a1.6 1.6 0 0 0-1.6-1.3Z"
+          />
+        </svg>
+        <span>Call {agent.displayName}</span>
+        <span class="visually-hidden">on {agent.mobileDisplay}</span>
+      </a>
+    )
+  }
+
+  {
+    mail && (
+      <a class="btn btn--secondary btn--plain" href={mail}>
+        <span>Email {agent.displayName}</span>
+      </a>
+    )
+  }
+
+  {
+    !wa && !tel && (
+      <p class="notice">
+        <strong>Contact details not configured.</strong> Add the mobile and WhatsApp numbers in
+        src/data/agent.ts — these buttons appear automatically once they are real.
+      </p>
+    )
+  }
+</div>
+
+<style>
+  .contact-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+  }
+</style>

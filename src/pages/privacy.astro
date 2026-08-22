@@ -1,0 +1,176 @@
+---
+export const prerender = true;
+
+import LegalLayout from '../layouts/LegalLayout.astro';
+import { agent } from '../data/agent';
+import { site } from '../data/site';
+import { project, verified } from '../data/project';
+
+const projectName = verified(project.name) ?? 'the project featured on this website';
+const contactEmail = site.legal.privacyContactEmail;
+---
+
+<LegalLayout
+  title="Privacy Policy | Independent property marketing website"
+  description="How enquiry details submitted through this website are collected, used, disclosed and retained, and how to withdraw consent or request access and correction."
+  pathname="/privacy"
+  heading="Privacy Policy"
+  intro="How your personal data is handled when you enquire through this website."
+>
+  <h2>1. Who operates this website</h2>
+  <p>
+    This website is operated by {agent.fullName}, a salesperson registered with the Council for
+    Estate Agencies (CEA registration {agent.ceaRegistrationNumber}), of {agent.agencyName} (estate agency
+    licence {agent.agencyLicenceNumber}). {site.legal.independentDisclosureFull}
+  </p>
+  <p>
+    For the purposes of the Personal Data Protection Act 2012 (PDPA), the salesperson named above
+    and
+    {' '}{agent.agencyName} handle the personal data you submit through this website. Enquiries about
+    this policy may be sent to {contactEmail}.
+  </p>
+
+  <h2>2. What personal data is collected</h2>
+  <p>When you submit the enquiry form, the following is collected:</p>
+  <ul>
+    <li>Your name.</li>
+    <li>Your Singapore mobile number.</li>
+    <li>What you are enquiring about, and any unit types you select.</li>
+    <li>Any message you choose to write.</li>
+    <li>Your consent and the date and time it was given.</li>
+  </ul>
+  <p>The following technical and marketing-attribution data is also recorded with the enquiry:</p>
+  <ul>
+    <li>
+      Campaign parameters present in the page address (utm_source, utm_medium, utm_campaign,
+      utm_term, utm_content) and advertising click identifiers (gclid, gbraid, wbraid).
+    </li>
+    <li>The page address you submitted from, and the referring page if your browser sent one.</li>
+    <li>Your browser user-agent string and the date and time of submission.</li>
+    <li>Your IP address, which is used transiently to apply submission rate limits.</li>
+  </ul>
+  <p>
+    Your name, phone number and message are never placed into a page address, an analytics event or
+    an advertising tag.
+  </p>
+
+  <h2>3. Why it is collected and used</h2>
+  <ul>
+    <li>To respond to your enquiry by WhatsApp, phone or email.</li>
+    <li>To arrange a showflat appointment where you have asked for one.</li>
+    <li>To send you the material you requested, such as a price list, floorplans or a brochure.</li>
+    <li>To advise you on {projectName} and, where relevant, comparable alternatives.</li>
+    <li>
+      To meet record-keeping obligations that apply to CEA-registered salespersons and licensed
+      estate agencies.
+    </li>
+    <li>To measure which advertising campaigns produce genuine enquiries.</li>
+  </ul>
+
+  <h2>4. Consent</h2>
+  <p>
+    The enquiry form asks for one consent, and the checkbox is not pre-ticked. It is required, and
+    it covers contacting you about your enquiry and nothing else. The form does not collect consent
+    to marketing, so submitting it is not a basis for sending you material about other launches.
+    Your selection is recorded with the submission, together with a timestamp and the exact wording
+    shown to you.
+  </p>
+
+  <h2>5. Withdrawing consent</h2>
+  <p>
+    You may withdraw consent at any time by writing to {contactEmail} or by replying to any message asking
+    to be removed. Withdrawal is given effect within a reasonable period, and in any case within the timeframe
+    required by the PDPA. Withdrawing consent means we will no longer be able to respond to your enquiry.
+  </p>
+
+  <h2>6. Access and correction</h2>
+  <p>
+    You may request access to the personal data held about you and information on how it has been
+    used or disclosed in the past year, and you may ask for corrections. Write to {contactEmail}. A
+    reasonable fee may apply to an access request, and you will be told of any fee before it is
+    incurred. Verification of your identity may be required before a request is fulfilled.
+  </p>
+
+  <h2>7. Disclosure</h2>
+  <p>Your personal data may be disclosed to:</p>
+  <ul>
+    <li>
+      {agent.agencyName}, for the purposes of supervision, compliance and record-keeping required of
+      a licensed estate agency.
+    </li>
+    <li>
+      The developer or its appointed marketing agents, where this is necessary to register your
+      interest, arrange a showflat appointment or process a booking — and only to the extent needed
+      for that purpose.
+    </li>
+    <li>
+      Service providers that operate systems used to handle enquiries, such as web hosting, email
+      delivery and customer relationship management. These providers act on instructions and are not
+      permitted to use your data for their own purposes.
+    </li>
+    <li>Regulators, or any party, where disclosure is required by law.</li>
+  </ul>
+  <p>
+    Your personal data is not sold. Where data is transferred outside Singapore — for example to a
+    hosting provider’s overseas servers — reasonable steps are taken to ensure a standard of
+    protection comparable to the PDPA.
+  </p>
+
+  <h2>8. Cookies, analytics and advertising technologies</h2>
+  <p>
+    This website uses a minimal amount of client-side script. Where analytics or advertising tags
+    are configured, they are governed by a consent banner and by Google Consent Mode: storage used
+    for analytics and advertising is denied by default and only enabled if you accept. Declining
+    leaves only what is strictly necessary for the website to function.
+  </p>
+  <p>The technologies that may be used, once configured, are:</p>
+  <ul>
+    <li>Google Analytics 4, to understand how the page is used in aggregate.</li>
+    <li>Google Ads conversion tracking, to measure which campaigns generate enquiries.</li>
+    <li>Google Tag Manager, to manage the above.</li>
+    <li>The Meta Pixel, which is loaded only after you accept.</li>
+  </ul>
+  <p>
+    You can also control cookies through your browser settings, and you can opt out of Google
+    Analytics using Google’s browser add-on. Blocking these does not affect your ability to use this
+    website or to submit an enquiry.
+  </p>
+
+  <h2>9. Retention</h2>
+  <p>
+    Enquiry records are retained for as long as needed to respond to and follow up on the enquiry,
+    and thereafter for as long as required to meet legal, regulatory and record-keeping obligations
+    applicable to estate agency work in Singapore. Records that are no longer needed for any legal
+    or business purpose are deleted or anonymised.
+  </p>
+  <p>
+    <strong>[SPECIFY YOUR ACTUAL RETENTION PERIOD]</strong> — replace this with the retention period you
+    genuinely apply, after checking the record-keeping requirements that apply to you and your agency.
+  </p>
+
+  <h2>10. Security</h2>
+  <p>
+    Reasonable technical and organisational measures are used to protect personal data, including
+    encrypted transmission over HTTPS, credentials held in server-side environment variables rather
+    than in page code, and access limited to those who need it. No method of transmission or storage
+    is completely secure, and absolute security cannot be guaranteed.
+  </p>
+
+  <h2>11. Children</h2>
+  <p>
+    This website is intended for adults evaluating a residential property purchase. Personal data is
+    not knowingly collected from anyone under 18.
+  </p>
+
+  <h2>12. Changes to this policy</h2>
+  <p>
+    This policy may be updated from time to time. The date at the top of this page shows when it was
+    last revised. Material changes will be reflected here before they take effect.
+  </p>
+
+  <h2>13. Contact</h2>
+  <p>
+    Questions, access and correction requests, and withdrawals of consent should be sent to
+    {' '}{contactEmail}, addressed to {agent.fullName}, {agent.agencyName}.
+  </p>
+</LegalLayout>

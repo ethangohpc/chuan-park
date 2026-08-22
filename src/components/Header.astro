@@ -1,0 +1,475 @@
+---
+/**
+ * STICKY HEADER + ACCESSIBLE MOBILE MENU
+ * ---------------------------------------------------------------------------
+ * - The project's logo (not the agent's personal branding) sits on the left and
+ *   links back to the top of the page. The link carries the accessible name, so
+ *   the image itself is decorative.
+ * - Desktop shows the nine section links plus a distinct "Book Showflat" CTA.
+ * - Mobile collapses to a hamburger dialog: Escape closes it, focus is
+ *   trapped, background scroll is locked, and selecting a link closes it.
+ * - Scroll-spy marks the active section with aria-current.
+ * - Legal links stay in the footer, never here.
+ */
+import { site } from '../data/site';
+import { project, isPlaceholder } from '../data/project';
+
+interface Props {
+  showSectionNav?: boolean;
+}
+
+const { showSectionNav = true } = Astro.props;
+
+const projectName = isPlaceholder(project.name) ? '[PROJECT NAME]' : project.name;
+const nav = site.navigation;
+// On legal pages the anchors do not exist, so link back to the homepage.
+const hrefFor = (href: string) => (showSectionNav ? href : `/${href}`);
+---
+
+<header class="site-header" data-header>
+  <div class="site-header__inner container">
+    <a
+      class="brand"
+      href={showSectionNav ? '#top' : '/'}
+      aria-label={`${projectName} — back to top`}
+    >
+      {
+        /* alt="" is deliberate: the link above already carries the project name,
+          and a described image here would announce it a second time. */
+      }
+      <img
+        class="brand__logo"
+        src={project.media.logo}
+        width={project.media.logoWidth}
+        height={project.media.logoHeight}
+        alt=""
+      />
+    </a>
+
+    <nav class="nav-desktop" aria-label="Section navigation">
+      <ul>
+        {
+          nav.map((item) => (
+            <li>
+              <a href={hrefFor(item.href)} data-nav-link data-section={item.id}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="site-header__actions">
+      <a
+        class="btn btn--sm header-cta"
+        href={hrefFor('#contact')}
+        data-track="book_showflat"
+        data-track-location="header"
+      >
+        Book Showflat
+      </a>
+
+      <button
+        type="button"
+        class="hamburger"
+        id="menu-toggle"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+      >
+        <span class="hamburger__bars" aria-hidden="true"><span></span><span></span></span>
+        <span class="visually-hidden">Open navigation menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!--
+  Mobile menu. Rendered in the DOM rather than injected by script, so its links
+  are in the served HTML for crawlers. Without JavaScript the toggle cannot
+  work, so the hamburger is hidden and the footer's full section list carries
+  navigation instead — no dead control is ever shown.
+-->
+<div class="mobile-menu" id="mobile-menu" data-mobile-menu hidden>
+  <div class="mobile-menu__panel" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mobile-menu__head">
+      <span class="mobile-menu__title">{projectName}</span>
+      <button type="button" class="mobile-menu__close" data-menu-close>
+        <span aria-hidden="true">&times;</span>
+        <span class="visually-hidden">Close navigation menu</span>
+      </button>
+    </div>
+
+    <nav aria-label="Section navigation (mobile)">
+      <ul class="mobile-menu__list">
+        {
+          nav.map((item) => (
+            <li>
+              <a href={hrefFor(item.href)} data-menu-link>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <a
+      class="btn btn--block"
+      href={hrefFor('#contact')}
+      data-menu-link
+      data-track="book_showflat"
+      data-track-location="mobile_menu"
+    >
+      Book Showflat
+    </a>
+
+    <p class="mobile-menu__note fineprint">{site.legal.independentDisclosureShort}</p>
+  </div>
+</div>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: color-mix(in srgb, var(--c-paper) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid transparent;
+    transition:
+      border-color var(--dur) var(--ease),
+      background-color var(--dur) var(--ease);
+  }
+
+  .site-header[data-scrolled] {
+    border-bottom-color: var(--c-line);
+    background: color-mix(in srgb, var(--c-paper) 96%, transparent);
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-5);
+    min-height: var(--header-h);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    padding-block: var(--sp-2);
+    flex: none;
+  }
+
+  .brand__logo {
+    height: 44px;
+    width: auto;
+    flex: none;
+    /*
+     * The global `img` rule tints every image with --c-stone so a slow photo
+     * shows a placeholder block rather than nothing. The logo is transparent
+     * vector, so that tint would render as a pale card behind it — it has to
+     * be cleared here for the lockup to sit directly on the header.
+     */
+    background: none;
+  }
+
+  .nav-desktop {
+    display: none;
+  }
+
+  .nav-desktop ul {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.7rem, 1.1vw, 1.4rem);
+  }
+
+  .nav-desktop a {
+    position: relative;
+    display: inline-block;
+    padding: var(--sp-2) 0;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--c-ink-3);
+    white-space: nowrap;
+    transition: color var(--dur) var(--ease);
+  }
+
+  .nav-desktop a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--c-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .nav-desktop a:hover,
+  .nav-desktop a[aria-current='true'] {
+    color: var(--c-ink);
+  }
+
+  .nav-desktop a[aria-current='true']::after,
+  .nav-desktop a:hover::after {
+    transform: scaleX(1);
+  }
+
+  .site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    flex: none;
+  }
+
+  .header-cta {
+    display: none;
+  }
+
+  .hamburger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-right: -8px;
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    background: var(--c-paper);
+  }
+
+  .hamburger__bars {
+    display: grid;
+    gap: 5px;
+    width: 18px;
+  }
+
+  .hamburger__bars span {
+    display: block;
+    height: 1.5px;
+    background: var(--c-ink);
+    border-radius: 2px;
+  }
+
+  /* ---- Mobile menu ---- */
+
+  .mobile-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    background: rgb(20 19 17 / 0.42);
+  }
+
+  .mobile-menu[hidden] {
+    display: none;
+  }
+
+  .mobile-menu__panel {
+    position: absolute;
+    inset: 0 0 auto 0;
+    max-height: 100dvh;
+    overflow-y: auto;
+    background: var(--c-paper);
+    padding: var(--sp-4) var(--gutter) calc(var(--sp-7) + env(safe-area-inset-bottom));
+    display: grid;
+    gap: var(--sp-5);
+    align-content: start;
+  }
+
+  .mobile-menu__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: calc(var(--header-h) - var(--sp-4) * 2 + 8px);
+    border-bottom: 1px solid var(--c-line);
+    padding-bottom: var(--sp-3);
+  }
+
+  .mobile-menu__title {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    color: var(--c-ink);
+  }
+
+  .mobile-menu__close {
+    width: 44px;
+    height: 44px;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--c-ink);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+  }
+
+  .mobile-menu__list {
+    display: grid;
+  }
+
+  .mobile-menu__list a {
+    display: block;
+    padding: var(--sp-4) 0;
+    border-bottom: 1px solid var(--c-line);
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    color: var(--c-ink);
+    text-decoration: none;
+  }
+
+  .mobile-menu__note {
+    margin: 0;
+  }
+
+  /* Without JavaScript the toggle cannot work, so hide it and let the
+     in-page anchors in the footer carry navigation instead. */
+  html:not(.js) .hamburger {
+    display: none;
+  }
+
+  @media (min-width: 40rem) {
+    .header-cta {
+      display: inline-flex;
+    }
+  }
+
+  @media (min-width: 71rem) {
+    .nav-desktop {
+      display: block;
+    }
+    .hamburger {
+      display: none;
+    }
+    .brand {
+      max-width: none;
+    }
+    .brand__logo {
+      height: 50px;
+    }
+  }
+</style>
+
+<script>
+  // ---------------------------------------------------------------------
+  // Header behaviour: hairline on scroll, accessible menu, scroll-spy.
+  // ---------------------------------------------------------------------
+  const header = document.querySelector<HTMLElement>('[data-header]');
+  const menu = document.querySelector<HTMLElement>('[data-mobile-menu]');
+  const toggle = document.getElementById('menu-toggle');
+  const panel = menu?.querySelector<HTMLElement>('.mobile-menu__panel');
+
+  /* Hairline appears once the visitor leaves the hero. */
+  if (header) {
+    const sentinel = document.createElement('div');
+    sentinel.setAttribute('aria-hidden', 'true');
+    sentinel.style.cssText = 'position:absolute;top:0;height:1px;width:1px;';
+    document.body.prepend(sentinel);
+    new IntersectionObserver(
+      ([entry]) => {
+        if (entry!.isIntersecting) header.removeAttribute('data-scrolled');
+        else header.setAttribute('data-scrolled', '');
+      },
+      { rootMargin: '-8px 0px 0px 0px' }
+    ).observe(sentinel);
+  }
+
+  /* ---- Mobile menu ---- */
+  let lastFocused: HTMLElement | null = null;
+
+  const focusableSelector =
+    'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+  function openMenu() {
+    if (!menu || !toggle) return;
+    lastFocused = document.activeElement as HTMLElement;
+    menu.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+    const first = panel?.querySelector<HTMLElement>(focusableSelector);
+    first?.focus();
+  }
+
+  function closeMenu() {
+    if (!menu || !toggle) return;
+    menu.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+    lastFocused?.focus();
+  }
+
+  toggle?.addEventListener('click', () => {
+    if (toggle.getAttribute('aria-expanded') === 'true') closeMenu();
+    else openMenu();
+  });
+
+  menu?.querySelector('[data-menu-close]')?.addEventListener('click', closeMenu);
+
+  /* Selecting a link closes the menu. */
+  menu?.querySelectorAll('[data-menu-link]').forEach((link) => {
+    link.addEventListener('click', () => closeMenu());
+  });
+
+  /* Clicking the scrim closes the menu. */
+  menu?.addEventListener('click', (event) => {
+    if (event.target === menu) closeMenu();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (!menu || menu.hidden) return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeMenu();
+      return;
+    }
+
+    /* Focus trap */
+    if (event.key === 'Tab' && panel) {
+      const focusables = Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+        (el) => el.offsetParent !== null
+      );
+      if (!focusables.length) return;
+      const first = focusables[0]!;
+      const last = focusables[focusables.length - 1]!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
+  /* ---- Scroll-spy ---- */
+  const navLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-nav-link]'));
+  const sections = navLinks
+    .map((link) => document.getElementById(link.dataset.section || ''))
+    .filter((el): el is HTMLElement => Boolean(el));
+
+  if (sections.length && 'IntersectionObserver' in window) {
+    const visible = new Set<string>();
+    const spy = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visible.add(entry.target.id);
+          else visible.delete(entry.target.id);
+        }
+        const activeId = sections.map((s) => s.id).find((id) => visible.has(id));
+        for (const link of navLinks) {
+          if (activeId && link.dataset.section === activeId) {
+            link.setAttribute('aria-current', 'true');
+          } else {
+            link.removeAttribute('aria-current');
+          }
+        }
+      },
+      { rootMargin: '-25% 0px -60% 0px', threshold: 0 }
+    );
+    sections.forEach((section) => spy.observe(section));
+  }
+</script>

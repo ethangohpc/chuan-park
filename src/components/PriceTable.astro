@@ -1,0 +1,306 @@
+---
+/**
+ * PRICE
+ * ---------------------------------------------------------------------------
+ * Structure follows the brief: two headline figures, a unit-type table with
+ * availability, an "as at" line, then the price-list CTA.
+ *
+ * WHAT IT WILL NOT DO
+ * - Invent a PSF. Both figures come from the developer's chart; neither is
+ *   calculated from the starting price and the smallest area, because the
+ *   cheapest unit and the smallest unit are rarely the same one. If the config
+ *   values are ever cleared, the figure disappears rather than being guessed.
+ * - Show a per-type price. The chart publishes them, but a price beside a type
+ *   that is sold out is noise, and one beside an available type ages badly
+ *   between phases — so the table carries size and availability, and the price
+ *   list is offered instead.
+ * - Cross out a price, imply a discount, or manufacture scarcity.
+ *
+ * Sizes and availability come from the shared unit grouping, so this table and
+ * the Floorplans carousel can never disagree with each other. The developer's
+ * fifteen named types are consolidated into the six headline sizes — see
+ * utils/unitGroups.ts for why, and for what that preserves.
+ */
+import SectionHeader from './SectionHeader.astro';
+import { project, verified } from '../data/project';
+import { formatDate, isoDate } from '../utils/format';
+import { unitGroups, areaRange } from '../utils/unitGroups';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const { pricing, availability } = project;
+
+const startingPrice = verified(pricing.startingPrice);
+/*
+ * A "from" psf is what buyers compare between launches, so it leads. A range
+ * is accepted as a fallback for the same slot — if only a range is on the price
+ * list, showing it beats showing nothing — and the label follows whichever is
+ * in use, so "from" is never printed against a range.
+ */
+const psfFrom = verified(pricing.psfFrom);
+const psfRange = verified(pricing.psfRange);
+const psf = psfFrom ?? psfRange;
+const psfLabel = psfFrom ? 'Price psf from' : 'Price psf';
+/** The retail unit is listed only when the project chooses to market it. */
+const showRetail = availability.listRetail && (availability.shopsLeft ?? 0) > 0;
+const priceAsAt = formatDate(pricing.priceLastUpdated);
+const priceAsAtIso = isoDate(pricing.priceLastUpdated);
+
+const rows = unitGroups();
+---
+
+<section class="section" id="price" aria-labelledby="price-title">
+  <div class="container">
+    <SectionHeader
+      eyebrow={`${projectName} price`}
+      title={`${projectName} Price`}
+      lede="Indicative figures to help you gauge the range. Reconfirm everything against the latest developer-issued price list."
+      id="price-title"
+    />
+
+    {
+      (startingPrice || psf) && (
+        <div class="price__figures">
+          {startingPrice && (
+            <div class="price__figure">
+              <span class="price__label">Price from</span>
+              <strong class="price__value">{startingPrice}</strong>
+            </div>
+          )}
+          {psf && (
+            <div class="price__figure">
+              <span class="price__label">{psfLabel}</span>
+              <strong class="price__value">{psf}</strong>
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    <div
+      class="price__table-wrap"
+      role="region"
+      aria-label={`Unit types, sizes and availability at ${projectName}`}
+      tabindex="0"
+    >
+      <table class="price-table">
+        <caption class="visually-hidden">
+          Unit types, approximate sizes and availability at {projectName}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Unit type</th>
+            <th scope="col">Size</th>
+            <th scope="col">Availability</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            rows.map((row) => (
+              <tr class={row.unitsLeft === 0 ? 'is-sold' : undefined}>
+                <th scope="row">{row.name}</th>
+                <td>{areaRange(row)}</td>
+                <td>
+                  <span
+                    class={`price__status price__status--${row.unitsLeft === 0 ? 'sold' : 'available'}`}
+                  >
+                    {row.unitsLeft === 0 ? 'Sold out' : 'Available'}
+                  </span>
+                </td>
+              </tr>
+            ))
+          }
+          {
+            showRetail && (
+              <tr>
+                <th scope="row">Retail shop</th>
+                <td>—</td>
+                <td>
+                  <span class="price__status price__status--available">Available</span>
+                </td>
+              </tr>
+            )
+          }
+        </tbody>
+      </table>
+    </div>
+
+    {
+      priceAsAt && (
+        <p class="fineprint price__asat">
+          Prices and availability shown are as at{' '}
+          <time datetime={priceAsAtIso ?? undefined}>{priceAsAt}</time>.
+        </p>
+      )
+    }
+
+    {
+      /*
+      Stripped to the single primary action. The pricing disclaimer that used to
+      sit here — indicative pricing, BSD/ABSD excluded, not an offer — is still
+      carried by the footer on every page and in full on /disclaimer.
+    */
+    }
+    <div class="price__cta">
+      <a class="btn" href="#contact" data-track="request_price_list" data-track-location="price">
+        Request Latest Price List
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .price__figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-6) var(--sp-8);
+    margin-bottom: var(--sp-6);
+  }
+
+  .price__figure {
+    display: grid;
+    gap: var(--sp-2);
+  }
+
+  .price__label {
+    font-size: var(--step--1);
+    color: var(--c-ink-3);
+  }
+
+  /*
+   * The two figures are what the section exists to deliver, so they carry the
+   * same size as the section title and outweigh it on weight. Tightened
+   * tracking keeps a bold serif numeral from looking loose at this size.
+   */
+  .price__value {
+    font-family: var(--font-display);
+    font-size: var(--step-4);
+    font-weight: 600;
+    letter-spacing: var(--tracking-tight);
+    line-height: 1.05;
+    color: var(--c-ink);
+  }
+
+  .price__table-wrap {
+    overflow-x: auto;
+    background: var(--card-bg);
+    border: 1px solid var(--c-line);
+    border-radius: var(--card-radius);
+  }
+
+  /*
+   * Narrow phones get tighter cells and smaller type rather than a wider
+   * min-width, so all three columns fit on a 360px screen. Availability is the
+   * column people came for; pushing it off the edge behind a horizontal scroll
+   * hides the one fact the table exists to convey. The wrapper still scrolls
+   * (and is still keyboard-reachable) for anything narrower than this.
+   */
+  .price-table {
+    min-width: 20rem;
+  }
+
+  .price-table th,
+  .price-table td {
+    text-align: left;
+    padding: var(--sp-3);
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  @media (min-width: 40rem) {
+    .price-table th,
+    .price-table td {
+      padding: var(--sp-4) var(--sp-5);
+    }
+  }
+
+  .price-table thead th {
+    font-family: var(--font-sans);
+    font-size: var(--step--2);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--c-ink-4);
+    background: var(--c-paper-2);
+    white-space: nowrap;
+  }
+
+  .price-table tbody th {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: var(--step--1);
+    color: var(--c-ink);
+  }
+
+  .price-table td {
+    font-size: var(--step--1);
+    color: var(--c-ink-2);
+  }
+
+  @media (min-width: 40rem) {
+    .price-table tbody th,
+    .price-table td {
+      font-size: var(--step-0);
+    }
+  }
+
+  .price-table tbody tr:last-child th,
+  .price-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .price-table tr.is-sold th,
+  .price-table tr.is-sold td {
+    color: var(--c-ink-3);
+  }
+
+  /* Same language as the Floorplans section: green available, red sold out,
+     with the word carrying the meaning and the dot only reinforcing it. */
+  .price__status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .price__status::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+
+  .price__status--available {
+    color: var(--c-positive);
+  }
+
+  .price__status--sold {
+    color: var(--c-negative);
+  }
+
+  .price__asat {
+    margin-top: var(--sp-3);
+  }
+
+  .price__cta {
+    margin-top: var(--sp-6);
+  }
+
+  .price__cta-title {
+    font-size: var(--step-2);
+    margin-bottom: var(--sp-3);
+  }
+
+  .price__cta p {
+    max-width: 62ch;
+  }
+
+  @media (min-width: 62rem) {
+    .price__cta {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--sp-7);
+    }
+  }
+</style>

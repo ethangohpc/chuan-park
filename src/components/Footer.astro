@@ -1,0 +1,289 @@
+---
+/**
+ * FOOTER
+ * ---------------------------------------------------------------------------
+ * Carries the mandatory identification: salesperson, CEA registration number,
+ * estate agency, estate agency licence number, contact details and the
+ * independent-website disclosure — all visible, at a readable size and
+ * contrast. Legal links live here and nowhere else in the navigation.
+ */
+import { agent, isPlaceholder, telHref, mailtoHref } from '../data/agent';
+import { project, verified } from '../data/project';
+import { site } from '../data/site';
+import { formatDate, isoDate } from '../utils/format';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const tel = telHref();
+const mail = mailtoHref();
+const updated = formatDate(project.lastUpdated);
+const updatedIso = isoDate(project.lastUpdated);
+const year = new Date().getFullYear();
+
+/*
+ * The footer sits on near-black, so a dark lockup would disappear into it.
+ * `media.logoLight` is the same artwork in the paper tone; where a project's
+ * logo already reads on dark, leave it unset and this falls back to `logo`.
+ */
+const footerLogo = verified(project.media.logoLight) ?? project.media.logo;
+
+/*
+ * The Information column. "Terms of Use" keeps that wording rather than the
+ * "Terms & Conditions" of the reference footer, because that is the heading on
+ * the page it opens — a link should say what it leads to.
+ *
+ * The agency's own site is listed only once `agencyUrl` is a real address.
+ */
+const legalLinks: { label: string; href: string; external?: boolean }[] = [
+  { label: `About ${agent.fullName}`, href: '/about-ethan' },
+  { label: 'Privacy Policy', href: '/privacy' },
+  { label: 'Terms of Use', href: '/terms' },
+  { label: 'Disclaimer', href: '/disclaimer' },
+  { label: 'Sitemap', href: '/sitemap-index.xml' },
+  { label: 'CEA Public Register', href: agent.ceaPublicRegisterUrl, external: true },
+  ...(isPlaceholder(agent.agencyUrl)
+    ? []
+    : [{ label: agent.agencyName, href: agent.agencyUrl, external: true }]),
+];
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="site-footer__top">
+      <div class="site-footer__brand">
+        <img
+          class="site-footer__logo"
+          src={footerLogo}
+          width={project.media.logoWidth}
+          height={project.media.logoHeight}
+          alt={projectName}
+          loading="lazy"
+          decoding="async"
+        />
+
+        <p class="site-footer__disclosure">
+          <span class="site-footer__disclosure-icon" aria-hidden="true">&#9432;</span>
+          <span>{site.legal.independentDisclosureFull}</span>
+        </p>
+      </div>
+
+      <div class="site-footer__col">
+        <h2 class="site-footer__heading">Operated by</h2>
+        <ul class="site-footer__ops">
+          <li class="site-footer__ops-name">{agent.fullName}</li>
+          <li>{agent.agencyName}</li>
+          <li>CEA Registration: {agent.ceaRegistrationNumber}</li>
+          <li>Agency Licence: {agent.agencyLicenceNumber}</li>
+          {
+            tel && (
+              <li>
+                Mobile:{' '}
+                <a href={tel} data-track="click_call" data-track-location="footer">
+                  {agent.mobileDisplay}
+                </a>
+              </li>
+            )
+          }
+          {
+            mail && (
+              <li>
+                Email: <a href={mail}>{agent.email}</a>
+              </li>
+            )
+          }
+        </ul>
+      </div>
+
+      <nav class="site-footer__col" aria-label="Information">
+        <h2 class="site-footer__heading">Information</h2>
+        <ul class="site-footer__links">
+          {
+            legalLinks.map((link) => (
+              <li>
+                {link.external ? (
+                  <a href={link.href} target="_blank" rel="noopener noreferrer">
+                    {link.label}
+                    <span class="visually-hidden"> (opens in a new tab)</span>
+                  </a>
+                ) : (
+                  <a href={link.href}>{link.label}</a>
+                )}
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+
+    {
+      /* Without scripting the header's menu button is hidden, so this list is
+        the only navigation a no-JS visitor has. It is hidden for everyone else
+        by an inline <head> script, so it never flashes. */
+    }
+    <nav class="site-footer__sections js-hide" aria-label="Page sections">
+      <h2 class="site-footer__heading">On this page</h2>
+      <ul>
+        {
+          site.navigation.map((item) => (
+            <li>
+              <a href={`/${item.href}`}>{item.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="site-footer__disclaimer">
+      <p>
+        <strong>Disclaimer.</strong>{' '}
+        All project information on this website is provided for general reference only, may change without
+        notice, and does not form part of an offer or contract. Prices, unit availability, floor areas
+        and completion dates must be reconfirmed against the developer&#8217;s official documents. Renderings,
+        illustrations and photographs are artists&#8217; impressions for illustrative purposes and may
+        not reflect the completed development or unit.
+        {
+          !isPlaceholder(project.developer) && (
+            <> No affiliation with, or endorsement by, {project.developer} is claimed or implied.</>
+          )
+        }
+        {' '}Full terms are set out in the <a href="/disclaimer">Disclaimer</a>. E&amp;OE.
+      </p>
+    </div>
+
+    <div class="site-footer__bottom">
+      <p>&#169; {year} {agent.fullName}. All rights reserved.</p>
+      {
+        updated && (
+          <p class="site-footer__meta">
+            Information last updated: <time datetime={updatedIso ?? undefined}>{updated}</time>
+          </p>
+        )
+      }
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--c-inverse);
+    color: var(--c-on-inverse-2);
+    padding-block: var(--sp-8) var(--sp-7);
+    font-size: var(--step--1);
+  }
+
+  .site-footer a {
+    color: var(--c-on-inverse-2);
+    text-decoration: none;
+    border-bottom: 1px solid rgb(244 241 234 / 0.22);
+    transition: color var(--dur) var(--ease);
+  }
+
+  .site-footer a:hover {
+    color: var(--c-on-inverse);
+    border-bottom-color: var(--c-accent);
+  }
+
+  .site-footer__top {
+    display: grid;
+    gap: var(--sp-7);
+  }
+
+  .site-footer__brand {
+    display: grid;
+    gap: var(--sp-5);
+    align-content: start;
+    justify-items: start;
+  }
+
+  .site-footer__logo {
+    height: 58px;
+    width: auto;
+    /* The global img placeholder tint would show through the transparent
+       lockup as a pale card on the dark footer. */
+    background: none;
+  }
+
+  /* The disclosure is boxed rather than set as running text: it is the one line
+     that has to be found, not read past. */
+  .site-footer__disclosure {
+    display: flex;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border: 1px solid rgb(244 241 234 / 0.18);
+    border-radius: var(--card-radius);
+    line-height: 1.6;
+    max-width: 42ch;
+  }
+
+  .site-footer__disclosure-icon {
+    flex: none;
+    color: var(--c-accent-on-dark);
+  }
+
+  .site-footer__heading {
+    font-family: var(--font-sans);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--c-on-inverse);
+    margin-bottom: var(--sp-4);
+  }
+
+  .site-footer__ops,
+  .site-footer__links,
+  .site-footer__sections ul {
+    display: grid;
+    gap: var(--sp-3);
+  }
+
+  .site-footer__ops-name {
+    font-size: var(--step-0);
+    font-weight: 500;
+    color: var(--c-on-inverse);
+  }
+
+  .site-footer__sections {
+    padding-top: var(--sp-6);
+  }
+
+  .site-footer__sections ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .site-footer__disclaimer {
+    margin-top: var(--sp-7);
+    padding-top: var(--sp-6);
+    border-top: 1px solid rgb(244 241 234 / 0.14);
+    line-height: 1.62;
+  }
+
+  .site-footer__disclaimer strong {
+    color: var(--c-on-inverse);
+    font-weight: 500;
+  }
+
+  .site-footer__bottom {
+    display: grid;
+    gap: var(--sp-3);
+    margin-top: var(--sp-6);
+    padding-top: var(--sp-5);
+    border-top: 1px solid rgb(244 241 234 / 0.14);
+  }
+
+  @media (min-width: 48rem) {
+    .site-footer__top {
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--sp-8);
+    }
+
+    .site-footer__bottom {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--sp-5);
+    }
+
+    .site-footer__meta {
+      text-align: right;
+    }
+  }
+</style>

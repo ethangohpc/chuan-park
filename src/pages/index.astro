@@ -1,0 +1,72 @@
+---
+/**
+ * LANDING PAGE
+ * ---------------------------------------------------------------------------
+ * Section order is fixed and matches the navigation:
+ * Hero → About → Location → Price → Floorplans → Brochure → Gallery →
+ * Developer → FAQ → Contact → Footer.
+ *
+ * The adviser's identification lives inside the Contact section rather than in
+ * a section of its own — it belongs next to the form it vouches for.
+ *
+ * Prerendered to static HTML: every fact a visitor or a crawler needs is in
+ * the initial response, with no client-side data fetching.
+ */
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import About from '../components/About.astro';
+import Location from '../components/Location.astro';
+import PriceTable from '../components/PriceTable.astro';
+import Floorplans from '../components/Floorplans.astro';
+import Brochure from '../components/Brochure.astro';
+import Gallery from '../components/Gallery.astro';
+import Developer from '../components/Developer.astro';
+import Faq from '../components/Faq.astro';
+import ContactForm from '../components/ContactForm.astro';
+import Lightbox from '../components/Lightbox.astro';
+
+import { project, verified } from '../data/project';
+import { buildGraph } from '../utils/structuredData';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const location = verified(project.locality) ?? verified(project.district) ?? 'Singapore';
+const district = verified(project.district);
+
+/*
+ * TITLE AND DESCRIPTION
+ * Written for the project-name ad groups (price, price list, showflat,
+ * floorplan, brochure, gallery, location, developer, review) without
+ * keyword-stuffing. Keep the project name first — it is what people search.
+ */
+const title = `${projectName} — Price, Floorplans & Showflat | ${location}`;
+
+const description =
+  `${projectName} is a new private residential launch in ${location}${district ? `, ${district}` : ''}. ` +
+  `See indicative pricing, unit types and floorplans, the brochure, the gallery and showflat details, ` +
+  `then arrange a viewing. Independent site by Ethan Goh, Huttons Asia Pte Ltd.`;
+
+const jsonLd = buildGraph({
+  pathname: '/',
+  title,
+  description,
+  includeFaq: true,
+  includeResidence: true,
+  breadcrumbs: [{ name: projectName, path: '/' }],
+});
+---
+
+<BaseLayout title={title} description={description} pathname="/" jsonLd={jsonLd}>
+  <Hero />
+  <About />
+  <Location />
+  <PriceTable />
+  <Floorplans />
+  <Brochure />
+  <Gallery />
+  <Developer />
+  <Faq />
+  <ContactForm />
+  <Lightbox />
+</BaseLayout>

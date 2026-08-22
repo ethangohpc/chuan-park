@@ -1,0 +1,126 @@
+---
+/**
+ * ANALYTICS + CONSENT MODE
+ * ---------------------------------------------------------------------------
+ * Nothing loads while the IDs in src/data/site.ts are still placeholders — so
+ * a freshly cloned template makes zero third-party requests and scores well
+ * on Core Web Vitals out of the box.
+ *
+ * ORDER MATTERS
+ * 1. Consent Mode v2 defaults are set FIRST, inline, before any tag.
+ * 2. The tag manager (or gtag) loads after.
+ * 3. ConsentNotice.astro calls gtag('consent','update', …) on a visitor choice
+ *    and persists it to localStorage.
+ *
+ * WHAT IS DELIBERATELY NOT HERE
+ * - Enhanced conversions (needs consent, hashing and accepted customer-data
+ *   terms — see src/utils/tracking.ts).
+ * - Any script that sends a name, email, phone number or message text.
+ *
+ * The Meta Pixel is not injected until marketing consent is granted; its ID is
+ * handed to the consent notice, which loads it on acceptance.
+ */
+import { site } from '../data/site';
+import { isPlaceholder } from '../data/project';
+
+const { tracking } = site;
+
+const gtmId = tracking.googleTagManagerId;
+const gaId = tracking.googleAnalyticsId;
+const adsId = tracking.googleAdsConversionId;
+const pixelId = tracking.metaPixelId;
+
+const hasGtm = !isPlaceholder(gtmId) && /^GTM-[A-Z0-9]{4,}$/.test(gtmId) && gtmId !== 'GTM-XXXXXXX';
+const hasGa = !isPlaceholder(gaId) && /^G-[A-Z0-9]{6,}$/.test(gaId) && gaId !== 'G-XXXXXXXXXX';
+const hasAds = !isPlaceholder(adsId) && /^AW-\d{6,}$/.test(adsId);
+const hasPixel = !isPlaceholder(pixelId) && /^\d{6,}$/.test(pixelId);
+
+// gtag.js is loaded directly only when GTM is absent — otherwise GTM owns it.
+const directGtagId = !hasGtm && (hasGa || hasAds) ? (hasGa ? gaId : adsId) : null;
+
+const consentEnabled = tracking.consentMode.enabled;
+const anyTag = hasGtm || hasGa || hasAds || hasPixel;
+
+/* Values are serialised into the inline scripts below. They are all
+   non-secret configuration IDs — nothing here is sensitive. */
+const consentDefaultsJson = JSON.stringify(tracking.consentMode.defaults);
+const consentRegionsJson = JSON.stringify(tracking.consentMode.regions);
+
+const consentScript = `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ window.dataLayer.push(arguments); }
+  window.gtag = gtag;
+  var defaults = ${consentDefaultsJson};
+  var regions = ${consentRegionsJson};
+  var stored = null;
+  try { stored = JSON.parse(localStorage.getItem('consent-state') || 'null'); } catch (e) {}
+  var state = stored || defaults;
+  var payload = Object.assign({ wait_for_update: 500 }, state);
+  if (regions.length) { payload.region = regions; }
+  gtag('consent', 'default', payload);
+  gtag('set', 'ads_data_redaction', state.ad_storage !== 'granted');
+  gtag('set', 'url_passthrough', true);
+`;
+
+const gtmScript = `
+  (function(w,d,s,l,i){
+    w[l]=w[l]||[];
+    w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
+    var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),
+        dl = l != 'dataLayer' ? '&l=' + l : '';
+    j.async=true;
+    j.src='https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+    f.parentNode.insertBefore(j,f);
+  })(window, document, 'script', 'dataLayer', ${JSON.stringify(gtmId)});
+`;
+
+const gtagScript = `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ window.dataLayer.push(arguments); }
+  window.gtag = window.gtag || gtag;
+  window.gtag('js', new Date());
+  ${hasGa ? `window.gtag('config', ${JSON.stringify(gaId)}, { anonymize_ip: true });` : ''}
+  ${hasAds ? `window.gtag('config', ${JSON.stringify(adsId)});` : ''}
+`;
+
+const pixelHandoffScript = `window.__metaPixelId = ${JSON.stringify(pixelId)};`;
+
+const noTagComment = `
+  No analytics or advertising tags are installed on this build.
+  Add real IDs in src/data/site.ts (the "tracking" block) once the containers exist:
+    googleTagManagerId       GTM-XXXXXXX
+    googleAnalyticsId        G-XXXXXXXXXX
+    googleAdsConversionId    AW-XXXXXXXXX
+    googleAdsConversionLabel [CONVERSION LABEL]
+    metaPixelId              [META PIXEL ID]
+  Conversion events already push to window.dataLayer regardless — see
+  src/utils/tracking.ts for the event list and the GTM wiring notes.
+`;
+---
+
+{consentEnabled && anyTag && <script is:inline set:html={consentScript} />}
+
+{hasGtm && <script is:inline set:html={gtmScript} />}
+
+{
+  directGtagId && (
+    <Fragment>
+      <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${directGtagId}`} />
+      <script is:inline set:html={gtagScript} />
+    </Fragment>
+  )
+}
+
+{hasPixel && <script is:inline set:html={pixelHandoffScript} />}
+
+{!anyTag && <Fragment set:html={`<!--${noTagComment}-->`} />}
+
+{
+  /*
+  The GTM <noscript> iframe is intentionally omitted. It must sit immediately
+  after <body>, it cannot fire without JavaScript anyway, and it adds a
+  render-blocking frame. Add it manually in BaseLayout if your tagging plan
+  requires it.
+*/
+}

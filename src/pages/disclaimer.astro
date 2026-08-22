@@ -1,0 +1,116 @@
+---
+export const prerender = true;
+
+import LegalLayout from '../layouts/LegalLayout.astro';
+import { agent } from '../data/agent';
+import { site } from '../data/site';
+import { project, verified } from '../data/project';
+
+const projectName = verified(project.name) ?? 'the development featured on this website';
+const developer = verified(project.developer);
+---
+
+<LegalLayout
+  title="Disclaimer | Independent property marketing website"
+  description="The basis on which project information, pricing, availability, images, floor areas and distances are presented on this independent marketing website."
+  pathname="/disclaimer"
+  heading="Disclaimer"
+  intro="What the information on this website is — and what it is not."
+>
+  <h2>1. Independent marketing website</h2>
+  <p>
+    <strong>{site.legal.independentDisclosureFull}</strong>
+  </p>
+  <p>
+    This website is not operated by, endorsed by, or affiliated with
+    {developer ? ` ${developer}` : ' the developer'} or any of its related entities. No claim is made
+    that the operator is the exclusive salesperson for {projectName}, or that {agent.agencyName} is the
+    exclusive marketing agency for it. Where the words “official”, “exclusive” or “direct developer” do
+    not appear on this website, that is deliberate.
+  </p>
+
+  <h2>2. General information only</h2>
+  <ul>
+    {site.legal.projectDisclaimer.map((item) => <li>{item}</li>)}
+  </ul>
+
+  <h2>3. Prices and availability</h2>
+  <p>
+    Any price shown is indicative only. Prices, price ranges, price-per-square-foot figures,
+    maintenance estimates, payment schedules, unit availability and any promotional arrangement are
+    determined by the developer, change between sales phases, and are confirmed only in the
+    developer-issued price list and unit chart current at the time of booking.
+  </p>
+  <p>
+    Figures shown exclude Buyer’s Stamp Duty, Additional Buyer’s Stamp Duty where applicable, legal
+    fees, and other costs of the transaction. No discount, rebate, guaranteed entry price or
+    preferential arrangement is offered or implied anywhere on this website.
+  </p>
+
+  <h2>4. No investment claims</h2>
+  <p>
+    Nothing on this website should be read as a forecast or promise about capital appreciation,
+    rental yield, rental demand, resale value, resale demand, or the timing or profitability of any
+    exit. Property prices can fall as well as rise. No guarantee of loan approval is given or
+    implied. Obtain independent financial advice appropriate to your circumstances.
+  </p>
+
+  <h2>5. Images and visualisations</h2>
+  <p>
+    {site.legal.imageDisclaimer} Renders and artists’ impressions may depict landscaping, furniture, fittings,
+    finishes, views and surroundings that are not part of the sale and that may differ from what is delivered.
+    Views shown are not guaranteed and may be affected by future development on neighbouring sites.
+  </p>
+
+  <h2>6. Floorplans and floor areas</h2>
+  <p>
+    {site.legal.floorplanDisclaimer} Layouts, dimensions and orientations are indicative and subject to
+    change and to final survey. Refer to the plans annexed to the Sale and Purchase Agreement.
+  </p>
+
+  <h2>7. Distances, travel times and amenities</h2>
+  <p>
+    Distances, walking times and driving times shown on this website are approximate unless
+    expressly marked as verified, and are provided for general guidance. Driving times vary
+    substantially with traffic and time of day. The presence of an amenity nearby is not a
+    representation that it will remain, or that access to it is assured.
+  </p>
+
+  <h2>8. Schools</h2>
+  <p>
+    Proximity to a school does not guarantee admission. Admission to Singapore primary schools is
+    determined by the Ministry of Education through its registration phases and applicable distance
+    categories, which are reviewed from time to time. Verify the current position at moe.gov.sg
+    before relying on it.
+  </p>
+
+  <h2>9. Future infrastructure and surroundings</h2>
+  <p>
+    References to announced or planned infrastructure reflect information published by the relevant
+    agencies at the time of writing. Announced plans are not commitments: routes, station locations,
+    land use and timelines are revised, deferred and occasionally cancelled. Land near the
+    development may be developed in ways that change the outlook, noise levels or traffic
+    conditions.
+  </p>
+
+  <h2>10. Third-party materials</h2>
+  <p>
+    Project names, logos, brochures, plans and renders remain the property of their respective
+    owners. They appear here, where they appear at all, to identify and market the development. If
+    you own material published here and wish it corrected or removed, contact {agent.email}.
+  </p>
+
+  <h2>11. Errors and omissions</h2>
+  <p>
+    While reasonable care is taken, no warranty is given as to the accuracy, completeness or
+    currency of anything on this website. Errors and omissions are excepted. Any reliance you place
+    on this information is at your own risk, and you should verify anything material to your
+    decision against the developer’s official documents before committing.
+  </p>
+
+  <h2>12. Identification</h2>
+  <p>
+    {agent.fullName} · CEA registration {agent.ceaRegistrationNumber} · {agent.agencyName} · estate agency
+    licence {agent.agencyLicenceNumber} · {agent.mobileDisplay} · {agent.email}
+  </p>
+</LegalLayout>

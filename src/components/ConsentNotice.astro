@@ -1,0 +1,194 @@
+---
+/**
+ * CONSENT NOTICE
+ * ---------------------------------------------------------------------------
+ * A small, dismissible bar — not a full-screen interstitial, not an entry
+ * pop-up, and never blocking the content. Google Ads treats interstitials that
+ * obstruct the landing page as a destination-experience problem, and visitors
+ * hate them.
+ *
+ * Behaviour:
+ * - Renders only when at least one tag is actually configured. A template with
+ *   placeholder IDs sets no cookies, so asking for consent would be theatre.
+ * - Hidden until JavaScript confirms no choice has been stored, so it never
+ *   flashes for returning visitors.
+ * - "Accept" grants analytics + advertising storage; "Decline" keeps the
+ *   denied defaults. Both persist to localStorage and call
+ *   gtag('consent','update', …).
+ * - The Meta Pixel is injected only after acceptance.
+ */
+import { site } from '../data/site';
+import { isPlaceholder } from '../data/project';
+
+const { tracking } = site;
+const anyTag =
+  (!isPlaceholder(tracking.googleTagManagerId) && tracking.googleTagManagerId !== 'GTM-XXXXXXX') ||
+  (!isPlaceholder(tracking.googleAnalyticsId) && tracking.googleAnalyticsId !== 'G-XXXXXXXXXX') ||
+  /^AW-\d{6,}$/.test(tracking.googleAdsConversionId) ||
+  /^\d{6,}$/.test(tracking.metaPixelId);
+---
+
+{
+  anyTag && (
+    <aside class="consent-notice" data-consent hidden aria-label="Cookie and tracking preferences">
+      <div class="consent-notice__inner">
+        <p class="consent-notice__text">
+          We use cookies and similar technologies to measure how this page performs and to attribute
+          advertising. Declining leaves only what is strictly necessary for the site to work. See
+          the{' '}
+          <a class="link" href="/privacy">
+            Privacy Policy
+          </a>
+          .
+        </p>
+        <div class="consent-notice__actions">
+          <button type="button" class="btn btn--sm btn--secondary" data-consent-decline>
+            Decline
+          </button>
+          <button type="button" class="btn btn--sm" data-consent-accept>
+            Accept
+          </button>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+<style>
+  .consent-notice {
+    position: fixed;
+    left: var(--sp-4);
+    right: var(--sp-4);
+    bottom: calc(var(--mobilebar-h) + env(safe-area-inset-bottom) + var(--sp-3));
+    z-index: 95;
+    background: var(--c-paper);
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: var(--sp-4) var(--sp-5);
+  }
+
+  .consent-notice[hidden] {
+    display: none;
+  }
+
+  .consent-notice__inner {
+    display: grid;
+    gap: var(--sp-3);
+    max-width: var(--container);
+    margin-inline: auto;
+  }
+
+  .consent-notice__text {
+    font-size: var(--step--1);
+    color: var(--c-ink-2);
+    max-width: 70ch;
+  }
+
+  .consent-notice__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+
+  @media (min-width: 48rem) {
+    .consent-notice {
+      left: var(--gutter);
+      right: var(--gutter);
+      bottom: var(--sp-4);
+    }
+
+    .consent-notice__inner {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--sp-5);
+    }
+  }
+
+  @media (min-width: 62rem) {
+    .consent-notice {
+      bottom: var(--sp-5);
+    }
+  }
+</style>
+
+<script>
+  const notice = document.querySelector<HTMLElement>('[data-consent]');
+
+  if (notice) {
+    const KEY = 'consent-state';
+    const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
+
+    const granted = {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      analytics_storage: 'granted',
+      functionality_storage: 'granted',
+      security_storage: 'granted',
+    };
+
+    const denied = {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      functionality_storage: 'granted',
+      security_storage: 'granted',
+    };
+
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(KEY);
+    } catch {
+      /* storage blocked — show the notice and keep the denied defaults */
+    }
+
+    if (!stored) notice.hidden = false;
+
+    function loadMetaPixel() {
+      const pixelId = (window as unknown as { __metaPixelId?: string }).__metaPixelId;
+      if (!pixelId || (window as unknown as { fbq?: unknown }).fbq) return;
+      /* Injected only after the visitor has accepted. */
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+      document.head.appendChild(script);
+      script.addEventListener('load', () => {
+        const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
+        fbq?.('init', pixelId);
+        fbq?.('track', 'PageView');
+      });
+    }
+
+    function apply(state: Record<string, string>, persist: boolean) {
+      if (persist) {
+        try {
+          localStorage.setItem(KEY, JSON.stringify(state));
+        } catch {
+          /* ignore */
+        }
+      }
+      gtag?.('consent', 'update', state);
+      if (state.ad_storage === 'granted') loadMetaPixel();
+      notice!.hidden = true;
+    }
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as Record<string, string>;
+        if (parsed.ad_storage === 'granted') loadMetaPixel();
+      } catch {
+        /* ignore malformed state */
+      }
+    }
+
+    notice.querySelector('[data-consent-accept]')?.addEventListener('click', () => {
+      apply(granted, true);
+    });
+
+    notice.querySelector('[data-consent-decline]')?.addEventListener('click', () => {
+      apply(denied, true);
+    });
+  }
+</script>

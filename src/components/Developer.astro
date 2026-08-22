@@ -1,0 +1,85 @@
+---
+/**
+ * ABOUT THE DEVELOPER
+ * ---------------------------------------------------------------------------
+ * The developer's name, a short factual description, and their logo. Nothing is
+ * asserted about awards, sales figures, ratings or financial standing, and no
+ * past-project list is shown.
+ *
+ * The heading uses `developerShortName`; the first paragraph still names the
+ * full joint venture, so the shorter title never obscures who is building it.
+ *
+ * Any profile line left as a [PLACEHOLDER] is filtered out rather than printed
+ * — an earlier version rendered its own "verify before publishing" note to
+ * visitors.
+ */
+import SectionHeader from './SectionHeader.astro';
+import { project, isPlaceholder, verified } from '../data/project';
+
+const developerName =
+  verified(project.developerShortName) ?? verified(project.developer) ?? '[DEVELOPER NAME]';
+const profile = project.content.developerProfile.filter((p) => !isPlaceholder(p));
+const media = project.media;
+---
+
+<section class="section" id="developer" aria-labelledby="developer-title">
+  <div class="container">
+    <SectionHeader eyebrow="About the developer" title={developerName} id="developer-title" />
+
+    <div class="dev__layout">
+      <div class="dev__main">
+        <div class="prose">
+          {profile.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </div>
+
+      {
+        !isPlaceholder(media.developerLogo) && (
+          <img
+            class="dev__logo"
+            src={media.developerLogo}
+            width={media.developerLogoWidth}
+            height={media.developerLogoHeight}
+            alt={media.developerLogoAlt}
+            loading="lazy"
+            decoding="async"
+          />
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .dev__layout {
+    display: grid;
+    gap: var(--sp-7);
+  }
+
+  .dev__main {
+    display: grid;
+    gap: var(--sp-6);
+    align-content: start;
+  }
+
+  /*
+   * No card, no caption: the marks sit straight on the page. The file carries
+   * a real alpha channel, so the global `img` placeholder tint has to go or it
+   * would paint the very panel this was taken out of.
+   */
+  .dev__logo {
+    width: auto;
+    max-width: 15rem;
+    height: auto;
+    background: none;
+    justify-self: start;
+  }
+
+  @media (min-width: 62rem) {
+    .dev__layout {
+      grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr);
+      gap: var(--sp-8);
+      align-items: start;
+    }
+  }
+</style>

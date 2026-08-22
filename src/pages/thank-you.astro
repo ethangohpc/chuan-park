@@ -1,0 +1,183 @@
+---
+/**
+ * THANK YOU
+ * ---------------------------------------------------------------------------
+ * Reached only after a submission that genuinely succeeded — the endpoint
+ * redirects here (no-JS) or the client navigates here after a 200 (JS).
+ *
+ * noindex: it must never appear in search results, and Google Ads should not
+ * land traffic here.
+ *
+ * CONVERSION TRACKING
+ * The `generate_lead` event fires on this page for the no-JS path. In the JS
+ * path it has already fired, and the guard below prevents a double count.
+ */
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { agent, telHref, whatsappHref } from '../data/agent';
+import { project, verified } from '../data/project';
+import { interpolate } from '../utils/format';
+import { site } from '../data/site';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const tel = telHref();
+const wa = whatsappHref(
+  interpolate(project.contact.whatsappMessages.general, { 'PROJECT NAME': projectName })
+);
+const showflat = verified(project.showflatAddress);
+---
+
+<BaseLayout
+  title={`Enquiry received — ${projectName}`}
+  description="Your enquiry has been received."
+  pathname="/thank-you"
+  indexable={false}
+  showSectionNav={false}
+  showMobileBar={false}
+>
+  <section class="section thankyou">
+    <div class="container container--narrow">
+      <p class="eyebrow">Enquiry received</p>
+      <h1 class="thankyou__title">Thank you — your enquiry has been sent.</h1>
+
+      <p class="thankyou__lead">
+        {project.contact.responseExpectation}
+      </p>
+
+      <div class="card thankyou__next">
+        <h2 class="thankyou__subtitle">What happens next</h2>
+        <ol class="thankyou__steps">
+          <li>
+            You will receive a reply by WhatsApp, phone or email, confirming the details you asked
+            for.
+          </li>
+          <li>
+            If you asked for a showflat appointment, a slot will be proposed. Viewing is by
+            appointment{showflat ? `, at ${showflat}` : ''}, and hours can change at short notice.
+          </li>
+          <li>
+            Any price list, unit chart or floorplan sent to you will carry its issue date, so you
+            can see how current it is.
+          </li>
+        </ol>
+      </div>
+
+      <div class="cluster thankyou__actions">
+        {
+          wa && (
+            <a
+              class="btn"
+              href={wa}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-track="click_whatsapp"
+              data-track-location="thank_you"
+            >
+              Message on WhatsApp
+              <span class="visually-hidden">(opens WhatsApp in a new tab)</span>
+            </a>
+          )
+        }
+        {
+          tel && (
+            <a
+              class="btn btn--secondary"
+              href={tel}
+              data-track="click_call"
+              data-track-location="thank_you"
+            >
+              Call {agent.mobileDisplay}
+            </a>
+          )
+        }
+        <a class="btn btn--secondary" href="/">Back to {projectName}</a>
+      </div>
+
+      <p class="fineprint thankyou__foot">
+        {site.legal.independentDisclosureFull} Your details are handled as set out in the
+        {' '}<a class="link" href="/privacy">Privacy Policy</a>. To withdraw consent at any time,
+        reply to any message or email {agent.email}.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .thankyou {
+    min-height: 60vh;
+  }
+
+  .thankyou__title {
+    font-size: var(--step-4);
+    margin-block: var(--sp-3) var(--sp-4);
+    max-width: 22ch;
+  }
+
+  .thankyou__lead {
+    font-size: var(--step-1);
+    color: var(--c-ink-3);
+    max-width: 56ch;
+  }
+
+  .thankyou__next {
+    margin-top: var(--sp-6);
+    padding: var(--sp-6);
+  }
+
+  .thankyou__subtitle {
+    font-size: var(--step-2);
+    margin-bottom: var(--sp-4);
+  }
+
+  .thankyou__steps {
+    display: grid;
+    gap: var(--sp-3);
+    counter-reset: step;
+  }
+
+  .thankyou__steps li {
+    position: relative;
+    padding-left: 2.25rem;
+    counter-increment: step;
+    color: var(--c-ink-2);
+  }
+
+  .thankyou__steps li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 0.1em;
+    font-size: var(--step--2);
+    letter-spacing: 0.08em;
+    color: var(--c-accent-ink);
+  }
+
+  .thankyou__actions {
+    margin-top: var(--sp-6);
+  }
+
+  .thankyou__foot {
+    margin-top: var(--sp-7);
+    padding-top: var(--sp-5);
+    border-top: 1px solid var(--c-line);
+  }
+</style>
+
+<script>
+  /*
+   * Fires the lead conversion for the no-JavaScript submission path, where the
+   * server redirected here. The JS path already fired it on the form response,
+   * so a session flag prevents double counting.
+   */
+  const w = window as unknown as { trackEvent?: (e: string, p?: object) => void };
+  try {
+    const key = 'lead_counted';
+    if (!sessionStorage.getItem(key)) {
+      w.trackEvent?.('generate_lead', { location: 'thank_you' });
+      sessionStorage.setItem(key, '1');
+    }
+  } catch {
+    w.trackEvent?.('generate_lead', { location: 'thank_you' });
+  }
+</script>

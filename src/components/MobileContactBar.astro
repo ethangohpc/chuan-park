@@ -1,0 +1,179 @@
+---
+/**
+ * STICKY MOBILE CONTACT BAR
+ * ---------------------------------------------------------------------------
+ * Three actions: Call, WhatsApp, Book Showflat.
+ *
+ * It must never sit on top of content or, worse, on top of the form's submit
+ * button. Two mechanisms handle that:
+ *  1. <body> gets bottom padding equal to the bar height plus the safe-area
+ *     inset, so the page can always scroll clear of it.
+ *  2. The bar hides itself while a field inside the contact form has focus, so
+ *     it cannot overlap the keyboard or the submit control.
+ *
+ * Buttons that have no configured destination are not rendered at all — no
+ * button here ever pretends to do something it cannot.
+ */
+import { telHref, whatsappHref } from '../data/agent';
+import { project, verified } from '../data/project';
+import { interpolate } from '../utils/format';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const tel = telHref();
+const wa = whatsappHref(
+  interpolate(project.contact.whatsappMessages.showflat, { 'PROJECT NAME': projectName })
+);
+---
+
+<div class="mobile-bar" data-mobile-bar aria-label="Quick contact">
+  {
+    tel && (
+      <a
+        class="mobile-bar__item"
+        href={tel}
+        data-track="click_call"
+        data-track-location="mobile_bar"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            d="M6.6 3h2.5l1.4 4-1.9 1.4a12.5 12.5 0 0 0 5.9 5.9l1.4-1.9 4 1.4v2.5A2.7 2.7 0 0 1 17.2 19 14.2 14.2 0 0 1 5 6.8 2.7 2.7 0 0 1 6.6 3Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>Call</span>
+      </a>
+    )
+  }
+
+  {
+    wa && (
+      <a
+        class="mobile-bar__item"
+        href={wa}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-track="click_whatsapp"
+        data-track-location="mobile_bar"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            d="M4 20l1.3-3.8A7.6 7.6 0 1 1 8.2 19L4 20Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M9.2 8.6c.3 1.6 2.6 3.9 4.2 4.2l.9-1.1 1.6.8v1.1c0 .6-.5 1.1-1.1 1.1A6.9 6.9 0 0 1 8.2 8.4c0-.6.5-1.1 1.1-1.1h1l.5 1.6-1.6.9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>WhatsApp</span>
+        <span class="visually-hidden">(opens WhatsApp in a new tab)</span>
+      </a>
+    )
+  }
+
+  <a
+    class="mobile-bar__item mobile-bar__item--primary"
+    href="/#contact"
+    data-track="book_showflat"
+    data-track-location="mobile_bar"
+    data-scroll-contact
+  >
+    <span>Book Showflat</span>
+  </a>
+</div>
+
+<style>
+  .mobile-bar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 90;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 1px;
+    background: var(--c-line);
+    border-top: 1px solid var(--c-line);
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(0);
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .mobile-bar[data-hidden] {
+    transform: translateY(110%);
+  }
+
+  .mobile-bar__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: var(--mobilebar-h);
+    padding: var(--sp-2);
+    background: var(--c-paper);
+    color: var(--c-ink);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .mobile-bar__item svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-bar__item--primary {
+    background: var(--c-ink);
+    color: var(--c-on-inverse);
+    font-weight: 500;
+  }
+
+  /* Keep the page scrollable clear of the bar. */
+  :global(body) {
+    padding-bottom: calc(var(--mobilebar-h) + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 62rem) {
+    .mobile-bar {
+      display: none;
+    }
+
+    :global(body) {
+      padding-bottom: 0;
+    }
+  }
+
+  @media print {
+    .mobile-bar {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // Hide the bar while the visitor is filling in the form, so it can never
+  // cover an input or the submit button.
+  const bar = document.querySelector<HTMLElement>('[data-mobile-bar]');
+  const form = document.querySelector<HTMLFormElement>('[data-lead-form]');
+
+  if (bar && form) {
+    form.addEventListener('focusin', () => bar.setAttribute('data-hidden', ''));
+    form.addEventListener('focusout', (event) => {
+      // Only restore once focus has genuinely left the form.
+      window.setTimeout(() => {
+        if (!form.contains(document.activeElement)) bar.removeAttribute('data-hidden');
+      }, 60);
+      void event;
+    });
+  }
+</script>

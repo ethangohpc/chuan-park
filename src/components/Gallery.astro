@@ -1,0 +1,156 @@
+---
+/**
+ * GALLERY
+ * ---------------------------------------------------------------------------
+ * A horizontal carousel of large images rather than a grid of thumbnails.
+ * Renders are the one thing on this page that rewards size: a 3-across grid
+ * showed nine images at a size too small to judge any of them. One big slide at
+ * a time, swipe or arrow to the next.
+ *
+ * Every slide is an <a> to the full image (works without JavaScript) upgraded
+ * to the shared lightbox. Artists' impressions are labelled on the slide
+ * itself, not only in the disclaimer at the bottom.
+ *
+ * The scrolling mechanism lives in Carousel.astro.
+ */
+import SectionHeader from './SectionHeader.astro';
+import Carousel from './Carousel.astro';
+import { project, verified } from '../data/project';
+import { site } from '../data/site';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const images = project.media.gallery;
+---
+
+<section
+  class="section section--alt"
+  id="gallery"
+  aria-labelledby="gallery-title"
+  data-view-event="view_gallery"
+>
+  <div class="container">
+    <SectionHeader
+      eyebrow="Gallery"
+      title="Gallery"
+      lede={`Renders and imagery for ${projectName}. Select any image to view it full size; swipe or use the arrows to move between them.`}
+      id="gallery-title"
+    />
+
+    <Carousel label={`${projectName} gallery images`}>
+      <ul class="gallery">
+        {
+          images.map((image, i) => (
+            <li class="gallery__item">
+              <a
+                class="gallery__link"
+                href={image.full ?? image.src}
+                data-lightbox="gallery"
+                data-lb-caption={image.caption}
+                data-lb-alt={image.alt}
+                data-lb-foot={
+                  image.isArtistImpression
+                    ? `Artist’s impression. ${site.legal.imageDisclaimer}`
+                    : site.legal.imageDisclaimer
+                }
+              >
+                <span class="ratio ratio--3-2">
+                  <img
+                    src={image.src}
+                    width={image.width}
+                    height={image.height}
+                    alt={image.alt}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                  />
+                </span>
+                <span class="gallery__meta">
+                  <span class="gallery__caption">{image.caption}</span>
+                  {image.isArtistImpression && (
+                    <span class="gallery__tag">Artist’s impression</span>
+                  )}
+                </span>
+                <span class="visually-hidden">View {image.caption} larger</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </Carousel>
+  </div>
+</section>
+
+<style>
+  .gallery {
+    display: flex;
+    gap: var(--sp-4);
+    align-items: stretch;
+  }
+
+  /*
+   * One large slide, sized to the reading width rather than the viewport, so a
+   * render is big enough to actually judge. position: relative is required by
+   * Carousel.astro: the "View … larger" text inside each link is
+   * .visually-hidden, i.e. absolutely positioned, and would otherwise escape
+   * the track's clip and stretch the document sideways.
+   */
+  .gallery__item {
+    position: relative;
+    flex: 0 0 auto;
+    width: min(86vw, 40rem);
+    scroll-snap-align: start;
+  }
+
+  .gallery__link {
+    position: relative;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    border-radius: var(--image-radius);
+  }
+
+  .gallery__link img {
+    transition: transform var(--dur-slow) var(--ease);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .gallery__link:hover img {
+      transform: scale(1.03);
+    }
+  }
+
+  .gallery__meta {
+    position: absolute;
+    inset: auto 0 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* One line, always. The caption truncates before it would wrap beneath
+       the tag, which otherwise left the two stacked and ragged. */
+    flex-wrap: nowrap;
+    gap: var(--sp-2);
+    padding: var(--sp-5) var(--sp-3) var(--sp-3);
+    background: linear-gradient(to top, rgb(18 17 15 / 0.72), rgb(18 17 15 / 0));
+    color: #fff;
+  }
+
+  .gallery__caption {
+    font-size: var(--step--1);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gallery__tag {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.25em 0.5em;
+    border: 1px solid rgb(255 255 255 / 0.5);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+</style>

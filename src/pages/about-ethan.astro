@@ -1,0 +1,198 @@
+---
+/**
+ * ABOUT THE ADVISER
+ * ---------------------------------------------------------------------------
+ * The page behind "Meet your adviser" in the contact section: portrait, who
+ * this is, what they do, and the contact actions.
+ *
+ * The regulatory identification — agency, CEA registration number, agency
+ * licence — sits in a single meta line under the name, with a link to the
+ * public register so a visitor can check it against an independent source.
+ *
+ * Nothing here is a sales claim. No awards, transaction volumes, rankings or
+ * years of experience, because no such fields exist in agent.ts and they are
+ * not going to be invented. Placeholder lines are filtered out, not printed.
+ */
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContactButtons from '../components/ContactButtons.astro';
+import { agent, isPlaceholder } from '../data/agent';
+import { project, verified } from '../data/project';
+import { site } from '../data/site';
+import { buildGraph } from '../utils/structuredData';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+
+const registerUrl = isPlaceholder(agent.ceaProfileUrl)
+  ? agent.ceaPublicRegisterUrl
+  : agent.ceaProfileUrl;
+
+const bio = agent.bioLong.filter((p) => !isPlaceholder(p));
+const specialisations = agent.specialisations.filter((s) => !isPlaceholder(s));
+
+const credentials = [
+  agent.agencyName,
+  `CEA Reg. ${agent.ceaRegistrationNumber}`,
+  `Agency Licence ${agent.agencyLicenceNumber}`,
+].join(' · ');
+
+const title = `${agent.fullName} — Your Singapore Property Adviser | ${agent.agencyName}`;
+const description = `${agent.fullName}, CEA registration ${agent.ceaRegistrationNumber}, of ${agent.agencyName}. Who operates this independent marketing website, and how to verify the registration.`;
+
+const jsonLd = buildGraph({
+  pathname: '/about-ethan',
+  title,
+  description,
+  breadcrumbs: [
+    { name: 'Home', path: '/' },
+    { name: agent.fullName, path: '/about-ethan' },
+  ],
+});
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  pathname="/about-ethan"
+  jsonLd={jsonLd}
+  showSectionNav={false}
+>
+  <section class="section" aria-labelledby="adviser-title">
+    <div class="container">
+      <div class="adviser-page">
+        <figure class="adviser-page__frame">
+          <img
+            src={agent.profileImage}
+            width={agent.profileImageWidth}
+            height={agent.profileImageHeight}
+            alt={agent.profileImageAlt}
+            loading="eager"
+            decoding="async"
+          />
+        </figure>
+
+        <div class="adviser-page__body">
+          <p class="eyebrow">Your Singapore Property Adviser</p>
+          <h1 class="adviser-page__name" id="adviser-title">{agent.fullName}</h1>
+          <p class="adviser-page__role">{agent.jobTitle}</p>
+          <p class="adviser-page__creds">{credentials}</p>
+
+          {bio.map((paragraph) => <p class="adviser-page__bio">{paragraph}</p>)}
+
+          {
+            specialisations.length > 0 && (
+              <ul class="adviser-page__tags" aria-label="Focus areas">
+                {specialisations.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            )
+          }
+
+          <ContactButtons location="about_adviser" showEmail />
+
+          <p class="adviser-page__verify">
+            <a href={registerUrl} target="_blank" rel="noopener noreferrer">
+              Verify on the CEA Public Register <span aria-hidden="true">→</span>
+              <span class="visually-hidden">(opens in a new tab)</span>
+            </a>
+          </p>
+
+          <p class="fineprint adviser-page__note">
+            {site.legal.independentDisclosureFull} Or use the{' '}
+            <a class="link" href="/#contact">enquiry form</a> on the {projectName} page.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .adviser-page {
+    display: grid;
+    gap: var(--sp-6);
+  }
+
+  /* A tinted panel behind the portrait, as in the reference: the cut-out has a
+     white background, which would otherwise float on the page with no edge. */
+  .adviser-page__frame {
+    margin: 0;
+    align-self: start;
+    justify-self: start;
+    max-width: 18rem;
+    background: var(--c-paper-2);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+  }
+
+  .adviser-page__frame img {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: none;
+  }
+
+  .adviser-page__body {
+    display: grid;
+    gap: var(--sp-4);
+    align-content: start;
+  }
+
+  .adviser-page__name {
+    font-size: var(--step-4);
+    margin: 0;
+  }
+
+  .adviser-page__role {
+    font-size: var(--step-1);
+    font-weight: 500;
+    color: var(--c-accent-ink);
+  }
+
+  .adviser-page__creds {
+    color: var(--c-ink-3);
+  }
+
+  .adviser-page__bio {
+    color: var(--c-ink-2);
+    max-width: var(--measure);
+  }
+
+  /* Pills, not bullets: five short capability labels read faster as chips. */
+  .adviser-page__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-block: var(--sp-2);
+  }
+
+  .adviser-page__tags li {
+    padding: 0.5em 1em;
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-pill);
+    font-size: var(--step--1);
+    color: var(--c-ink-2);
+  }
+
+  .adviser-page__verify a {
+    color: var(--c-ink);
+  }
+
+  .adviser-page__note {
+    max-width: var(--measure);
+  }
+
+  @media (min-width: 48rem) {
+    .adviser-page {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 2fr);
+      gap: var(--sp-8);
+      align-items: start;
+    }
+
+    .adviser-page__frame {
+      max-width: none;
+    }
+  }
+</style>

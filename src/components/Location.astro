@@ -1,0 +1,376 @@
+---
+/**
+ * LOCATION
+ * ---------------------------------------------------------------------------
+ * A static, optimised map image loads by default. The interactive map is only
+ * fetched if the visitor asks for it — a Google Maps iframe costs several
+ * hundred kilobytes and would sink the LCP and INP of an ad landing page.
+ *
+ * Every distance and travel time carries a source-quality marker. Anything not
+ * marked `verified` is presented as approximate, and unfilled values are shown
+ * as "to be confirmed" rather than invented.
+ */
+import SectionHeader from './SectionHeader.astro';
+import { project, isPlaceholder, verified } from '../data/project';
+
+const projectName = verified(project.name) ?? 'the project';
+const loc = project.location;
+
+const hasGeo = !isPlaceholder(project.geo.latitude) && !isPlaceholder(project.geo.longitude);
+const embedUrl = hasGeo
+  ? `https://www.google.com/maps?q=${project.geo.latitude},${project.geo.longitude}&z=16&output=embed`
+  : null;
+const externalMapUrl =
+  verified(loc.interactiveMapUrl) ??
+  (hasGeo
+    ? `https://www.google.com/maps?q=${project.geo.latitude},${project.geo.longitude}`
+    : null);
+
+const groupsWithContent = loc.groups.filter((g) => g.items.length > 0);
+const media = project.media;
+
+/*
+ * Copy still holding a [PLACEHOLDER] is dropped rather than printed. Editorial
+ * instructions to the site owner are not content, and leaking them onto the
+ * page looked broken as well as padding the section out.
+ */
+const overview = loc.overview.filter((t) => !isPlaceholder(t));
+const futureInfrastructure = loc.futureInfrastructure.filter((t) => !isPlaceholder(t));
+
+/*
+ * The figure beside the copy is a render on most projects, so "Artist's
+ * impression" is the default. Where a real photograph is used instead — a view
+ * of the surrounding estate, say — set `media.locationImageCaption` and the
+ * caption says what the picture actually is.
+ */
+const locationImageCaption = verified(media.locationImageCaption) ?? 'Artist’s impression';
+
+/*
+ * The figure beside the copy is optional. Clear `media.locationImage` and the
+ * section drops it and collapses to a single column, rather than leaving the
+ * copy stranded in a half-width column with dead space next to it.
+ */
+const locationImage = verified(media.locationImage);
+---
+
+<section class="section section--alt" id="location" aria-labelledby="location-title">
+  <div class="container">
+    <SectionHeader
+      eyebrow="Location & connectivity"
+      title={`Where ${projectName} sits`}
+      id="location-title"
+    />
+
+    <div class={`location__lead reveal${locationImage ? '' : ' location__lead--no-figure'}`}>
+      <div class="prose">
+        {overview.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+
+      {
+        locationImage && (
+          <figure class="location__figure">
+            <img
+              src={locationImage}
+              width={media.locationImageWidth}
+              height={media.locationImageHeight}
+              alt={media.locationImageAlt}
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption class="fineprint">{locationImageCaption}</figcaption>
+          </figure>
+        )
+      }
+
+      <figure class="figure location__map" data-map-holder>
+        <img
+          src={loc.mapImage}
+          width={loc.mapImageWidth}
+          height={loc.mapImageHeight}
+          alt={loc.mapImageAlt}
+          loading="lazy"
+          decoding="async"
+        />
+        <figcaption class="location__map-caption">
+          <span>Static map preview. Positions are indicative.</span>
+          {
+            embedUrl ? (
+              <button
+                type="button"
+                class="btn btn--secondary btn--sm"
+                data-map-open
+                data-embed={embedUrl}
+              >
+                Open interactive map
+              </button>
+            ) : externalMapUrl ? (
+              <a
+                class="btn btn--secondary btn--sm"
+                href={externalMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open in Google Maps
+                <span class="visually-hidden">(opens in a new tab)</span>
+              </a>
+            ) : (
+              <span class="fineprint">
+                [GOOGLE MAPS URL] — add the map link or coordinates in project.ts.
+              </span>
+            )
+          }
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="location__groups">
+      {
+        groupsWithContent.map((group) => (
+          <section class="location__group reveal" aria-label={group.title}>
+            <div class="location__group-head">
+              <h3 class="location__group-title">{group.title}</h3>
+              {group.intro && <p class="fineprint">{group.intro}</p>}
+            </div>
+            <ul class="amenity-list">
+              {group.items.map((item) => (
+                <li class="amenity">
+                  <span class="amenity__name">{item.name}</span>
+                  <span class="amenity__meta">
+                    {[verified(item.distance), verified(item.time)].filter(Boolean).join(' · ')}
+                  </span>
+                  {item.band && (
+                    <span class={`amenity__band amenity__band--${item.band}`}>
+                      {item.band === 'within-1km' ? 'Within 1 km' : '1 – 2 km'}
+                    </span>
+                  )}
+                  {item.quality === 'unverified' && (
+                    <span class="badge badge--muted">To be confirmed</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+
+    {
+      futureInfrastructure.length > 0 && (
+        <div class="location__future reveal">
+          <h3 class="location__subtitle">Announced future infrastructure</h3>
+          <ul class="location__list">
+            {futureInfrastructure.map((item) => (
+              <li>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .location__lead {
+    display: grid;
+    gap: var(--sp-6);
+    margin-bottom: var(--sp-8);
+  }
+
+  .location__map img {
+    width: 100%;
+    border: 1px solid var(--c-line);
+    border-radius: var(--image-radius);
+  }
+
+  /*
+   * No crop. This is a detailed marketing map — MRT lines, schools, malls — and
+   * cropping it to save vertical space cut off content the visitor came here to
+   * read. It renders whole at its natural ratio on every screen.
+   */
+
+  .location__map-caption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+
+  .location__map iframe {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border: 1px solid var(--c-line);
+    border-radius: var(--image-radius);
+  }
+
+  .location__figure {
+    margin: 0;
+  }
+
+  .location__figure img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--image-radius);
+  }
+
+  .location__figure figcaption {
+    margin-top: var(--sp-3);
+  }
+
+  .location__subtitle {
+    font-size: var(--step-2);
+    margin-bottom: var(--sp-4);
+  }
+
+  .location__list {
+    display: grid;
+    gap: var(--sp-3);
+  }
+
+  .location__list li {
+    position: relative;
+    padding-left: 1.6rem;
+  }
+
+  .location__list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 0.8rem;
+    height: 1px;
+    background: var(--c-accent);
+  }
+
+  .location__list--tradeoff li::before {
+    background: var(--c-ink-4);
+  }
+
+  .location__groups {
+    display: grid;
+    gap: var(--sp-7);
+    margin-bottom: var(--sp-8);
+  }
+
+  .location__group-head {
+    display: grid;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+    padding-bottom: var(--sp-3);
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  .location__group-title {
+    font-size: var(--step-1);
+  }
+
+  .amenity-list {
+    display: grid;
+    gap: 0;
+  }
+
+  .amenity {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: var(--sp-2) var(--sp-4);
+    padding-block: var(--sp-3);
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  .amenity__name {
+    font-size: var(--step-0);
+    color: var(--c-ink);
+  }
+
+  /*
+   * Red within 1 km, blue for 1-2 km — the MOE registration bands. Colour is
+   * reinforcement only: the band is always spelled out, so it still reads for
+   * anyone who cannot separate the two hues.
+   */
+  .amenity__band {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    font-size: var(--step--1);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .amenity__band--within-1km {
+    color: var(--c-negative);
+  }
+
+  .amenity__band--1-2km {
+    color: var(--c-info);
+  }
+
+  .amenity__meta {
+    display: flex;
+    gap: var(--sp-2);
+    align-items: baseline;
+    font-size: var(--step--1);
+    color: var(--c-ink-3);
+    grid-column: 1;
+  }
+
+  .amenity .badge {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+
+  .location__future {
+    margin-bottom: var(--sp-6);
+  }
+
+  @media (min-width: 62rem) {
+    .location__lead {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      gap: var(--sp-6) var(--sp-8);
+      align-items: start;
+    }
+
+    /* No figure to sit beside: one column, and the copy keeps a readable
+       measure instead of running the full width of the container. */
+    .location__lead--no-figure {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .location__lead--no-figure .prose {
+      max-width: var(--measure);
+    }
+
+    /* Copy and render share the first row; the map runs full width beneath,
+       rather than being stranded in one column with dead space beside it. */
+    .location__map {
+      grid-column: 1 / -1;
+    }
+
+    .location__groups {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--sp-7) var(--sp-8);
+    }
+  }
+</style>
+
+<script>
+  // The interactive map is fetched only on request — never on page load.
+  const button = document.querySelector<HTMLButtonElement>('[data-map-open]');
+  button?.addEventListener('click', () => {
+    const holder = button.closest<HTMLElement>('[data-map-holder]');
+    const img = holder?.querySelector('img');
+    const embed = button.dataset.embed;
+    if (!holder || !embed || !img) return;
+
+    const iframe = document.createElement('iframe');
+    iframe.src = embed;
+    iframe.loading = 'lazy';
+    iframe.title = 'Interactive location map';
+    iframe.referrerPolicy = 'no-referrer-when-downgrade';
+    iframe.setAttribute('allowfullscreen', '');
+
+    img.replaceWith(iframe);
+    button.remove();
+  });
+</script>

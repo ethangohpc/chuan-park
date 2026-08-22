@@ -1,0 +1,123 @@
+---
+/**
+ * BROCHURE
+ * ---------------------------------------------------------------------------
+ * One card, one action. The cover sits beside a single sentence saying what the
+ * document covers, and the only control is "Request Brochure" — which scrolls
+ * to the enquiry form rather than starting a download.
+ *
+ * WHY NOTHING LINKS THE PDF
+ * The brochure in /public/brochure is dated 2023 and came from a sales kit
+ * marked "not for circulation". Sending the current issue on request means the
+ * recipient gets a document with a known date, and nothing here hands out a
+ * file this site may not be authorised to distribute. `brochure.file` is
+ * therefore read for nothing on this page — see the note beside it.
+ */
+import SectionHeader from './SectionHeader.astro';
+import { project, verified } from '../data/project';
+import { interpolate } from '../utils/format';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const brochure = project.brochure;
+
+const summary = verified(brochure.summary);
+---
+
+<section
+  class="section"
+  id="brochure"
+  aria-labelledby="brochure-title"
+  data-view-event="view_brochure"
+>
+  <div class="container">
+    <SectionHeader
+      eyebrow={`${projectName} brochure`}
+      title={`${projectName} Brochure`}
+      id="brochure-title"
+    />
+
+    <div class="brochure card">
+      <figure class="brochure__cover">
+        <img
+          src={brochure.cover}
+          width={brochure.coverWidth}
+          height={brochure.coverHeight}
+          alt={interpolate(brochure.coverAlt, { 'PROJECT NAME': projectName })}
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+
+      <div class="brochure__body">
+        {
+          summary && (
+            <p class="brochure__lede">
+              Explore the {projectName} brochure for {summary}.
+            </p>
+          )
+        }
+
+        <p>
+          <a
+            class="btn"
+            href="#contact"
+            data-track="request_brochure"
+            data-track-location="brochure">Request Brochure</a
+          >
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .brochure {
+    display: grid;
+    gap: var(--sp-6);
+    padding: var(--sp-5);
+  }
+
+  .brochure__cover {
+    margin: 0;
+    /*
+     * A tinted panel behind the cover, as in the reference: the brochure is a
+     * pale cream board, so on the card's own near-white it would otherwise read
+     * as a floating rectangle with no edge.
+     */
+    display: grid;
+    place-items: center;
+    padding: var(--sp-6);
+    background: var(--c-paper-2);
+    border-radius: var(--card-radius);
+  }
+
+  .brochure__cover img {
+    width: 100%;
+    max-width: 22rem;
+    height: auto;
+    border: 1px solid var(--c-line);
+    border-radius: var(--image-radius);
+    box-shadow: var(--shadow-md);
+  }
+
+  .brochure__body {
+    display: grid;
+    gap: var(--sp-5);
+    align-content: center;
+  }
+
+  .brochure__lede {
+    font-size: var(--step-1);
+    color: var(--c-ink-2);
+    max-width: 44ch;
+  }
+
+  @media (min-width: 48rem) {
+    .brochure {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--sp-8);
+      padding: var(--sp-6);
+      align-items: center;
+    }
+  }
+</style>

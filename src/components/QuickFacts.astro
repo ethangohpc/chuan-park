@@ -1,0 +1,65 @@
+---
+/**
+ * QUICK FACTS
+ * Only renders facts that have been filled in — an unverified field is dropped
+ * rather than shown as "TBC", so the panel never implies confirmed detail.
+ */
+import { quickFacts } from '../data/project';
+
+const facts = quickFacts();
+---
+
+{
+  facts.length > 0 ? (
+    <aside class="quickfacts card" aria-labelledby="quickfacts-title">
+      <h3 class="quickfacts__title" id="quickfacts-title">
+        Project at a glance
+      </h3>
+      <dl class="dl-facts">
+        {facts.map((fact) => (
+          <div>
+            <dt>{fact.label}</dt>
+            <dd>
+              {fact.value}
+              {fact.note && <span class="quickfacts__note">{fact.note}</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </aside>
+  ) : (
+    <aside class="quickfacts card">
+      <h3 class="quickfacts__title">Project at a glance</h3>
+      <p class="fineprint">
+        Verified project facts will appear here once they have been confirmed against the
+        developer’s documents. Nothing is displayed until it has been checked.
+      </p>
+    </aside>
+  )
+}
+
+<style>
+  .quickfacts {
+    padding: var(--sp-6);
+    align-self: start;
+    position: sticky;
+    top: calc(var(--header-h) + var(--sp-4));
+  }
+
+  .quickfacts__title {
+    font-size: var(--step-2);
+    margin-bottom: var(--sp-4);
+  }
+
+  .quickfacts__note {
+    display: block;
+    font-size: var(--step--2);
+    color: var(--c-ink-4);
+  }
+
+  @media (max-width: 61.99rem) {
+    .quickfacts {
+      position: static;
+    }
+  }
+</style>

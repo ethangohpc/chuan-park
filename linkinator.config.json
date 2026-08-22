@@ -1,0 +1,11 @@
+{
+  "recurse": true,
+  "skip": [
+    "^https://example\\.com",
+    "sitemap-index\\.xml",
+    "^https://wa\\.me",
+    "^tel:",
+    "^mailto:"
+  ],
+  "timeout": 20000
+}

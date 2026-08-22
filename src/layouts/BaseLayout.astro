@@ -1,0 +1,241 @@
+---
+/**
+ * BASE LAYOUT
+ * ---------------------------------------------------------------------------
+ * Owns <head>, the document chrome, and the site-wide header/footer.
+ * All pages render through this or through LegalLayout (which wraps it).
+ */
+import '../styles/global.css';
+import '../styles/themes.css';
+
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import MobileContactBar from '../components/MobileContactBar.astro';
+import Analytics from '../components/Analytics.astro';
+import ConsentNotice from '../components/ConsentNotice.astro';
+
+import { site } from '../data/site';
+import { project, isPlaceholder } from '../data/project';
+import { logVerificationReport } from '../utils/verification';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path only, e.g. '/privacy'. Used for canonical + structured data. */
+  pathname: string;
+  /** Pre-serialised JSON-LD from utils/structuredData.ts. */
+  jsonLd?: string;
+  /** Absolute or root-relative OG image. Defaults to the project OG image. */
+  ogImage?: string;
+  /** Set false on utility pages such as /thank-you. */
+  indexable?: boolean;
+  /** Hide the sticky mobile contact bar (e.g. on the thank-you page). */
+  showMobileBar?: boolean;
+  /** Hide the anchor navigation on pages that have no matching sections. */
+  showSectionNav?: boolean;
+}
+
+const {
+  title,
+  description,
+  pathname,
+  jsonLd,
+  ogImage = project.media.ogImage,
+  indexable = true,
+  showMobileBar = true,
+  showSectionNav = true,
+} = Astro.props;
+
+// Printed to the build log only — never rendered to visitors.
+logVerificationReport();
+
+const canonical = new URL(pathname, site.url).href;
+const ogImageUrl = new URL(ogImage, site.url).href;
+const allowIndexing = site.indexable && indexable;
+const projectName = isPlaceholder(project.name) ? 'New launch' : project.name;
+---
+
+<!doctype html>
+<html lang="en-SG" data-theme={site.theme}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta
+      name="robots"
+      content={allowIndexing ? 'index, follow, max-image-preview:large' : 'noindex, nofollow'}
+    />
+    <!--
+      Google AdsBot must never be blocked or the landing page cannot be
+      crawled for Ads quality checks. robots.txt allows it explicitly.
+    -->
+
+    <meta name="theme-color" content="#1b1a18" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Open Graph / social sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={`${projectName} — information site`} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_SG" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <!--
+      Icons and manifest. The mark is the CHUAN PARK wordmark's own C and P,
+      lifted as artwork from the catalogue cover at 12x and set in the cover's
+      gold on its teal — so the tab icon is the project's typeface, not a
+      lookalike. A monogram rather than the full lockup because "CHUAN PARK" is
+      unreadable at 16 px, which is the size that actually matters.
+    -->
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    {
+      /*
+      FONTS
+      This template ships with high-quality system/serif fallback stacks so the
+      first paint carries no network cost and no layout shift. To use a licensed
+      display face, drop the .woff2 files into /public/fonts, uncomment the
+      @font-face rules below, and add the family name at the front of
+      --font-display / --font-sans in src/styles/themes.css. Keep
+      `font-display: swap` and `size-adjust` tuned to the fallback to hold CLS
+      at zero.
+    */
+    }
+    <style is:inline>
+      /*
+      @font-face {
+        font-family: 'Canela';
+        src: url('/fonts/canela-light.woff2') format('woff2');
+        font-weight: 300;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Inter';
+        src: url('/fonts/inter-variable.woff2') format('woff2-variations');
+        font-weight: 300 700;
+        font-style: normal;
+        font-display: swap;
+        size-adjust: 100%;
+      }
+      */
+    </style>
+
+    {/* Marks the document as JS-capable so CSS can hide no-JS fallbacks. */}
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+
+    <Analytics />
+
+    {jsonLd && <script is:inline type="application/ld+json" set:html={jsonLd} />}
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <Header showSectionNav={showSectionNav} />
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <Footer />
+
+    {showMobileBar && <MobileContactBar />}
+
+    <ConsentNotice />
+
+    <script>
+      // ---------------------------------------------------------------------
+      // Global behaviour (~1.5 kB): delegated analytics events and a tiny
+      // scroll-reveal. Everything below is progressive enhancement — the page
+      // is complete and usable without it.
+      // ---------------------------------------------------------------------
+      type TrackPayload = { location?: string; detail?: string };
+
+      const w = window as unknown as {
+        dataLayer: Record<string, unknown>[];
+        trackEvent: (event: string, payload?: TrackPayload) => void;
+      };
+
+      w.dataLayer = w.dataLayer || [];
+
+      w.trackEvent = function trackEvent(event: string, payload: TrackPayload = {}) {
+        w.dataLayer.push({
+          event,
+          event_location: payload.location ?? 'unspecified',
+          ...(payload.detail ? { event_detail: payload.detail } : {}),
+        });
+      };
+
+      // Declarative event tracking: data-track="event_name" data-track-location="hero"
+      document.addEventListener(
+        'click',
+        (event) => {
+          const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-track]');
+          if (!target) return;
+          w.trackEvent(target.dataset.track!, {
+            location: target.dataset.trackLocation,
+            detail: target.dataset.trackDetail,
+          });
+        },
+        { passive: true }
+      );
+
+      // Fires once, when the page is meaningfully viewed.
+      w.trackEvent('view_project', { location: 'page_load' });
+
+      // Section-view events (gallery, brochure) without a scroll listener.
+      const viewTargets = document.querySelectorAll<HTMLElement>('[data-view-event]');
+      if (viewTargets.length && 'IntersectionObserver' in window) {
+        const viewObserver = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              const el = entry.target as HTMLElement;
+              w.trackEvent(el.dataset.viewEvent!, { location: el.id || 'section' });
+              viewObserver.unobserve(el);
+            }
+          },
+          { threshold: 0.35 }
+        );
+        viewTargets.forEach((el) => viewObserver.observe(el));
+      }
+
+      // Subtle reveal — skipped entirely when the visitor prefers reduced motion.
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const revealTargets = document.querySelectorAll<HTMLElement>('.reveal');
+      if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+        revealTargets.forEach((el) => el.classList.add('is-visible'));
+      } else {
+        const revealObserver = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              entry.target.classList.add('is-visible');
+              revealObserver.unobserve(entry.target);
+            }
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.05 }
+        );
+        revealTargets.forEach((el) => revealObserver.observe(el));
+      }
+    </script>
+  </body>
+</html>

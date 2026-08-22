@@ -1,0 +1,142 @@
+/* ===========================================================================
+   VISUAL THEMES
+   ---------------------------------------------------------------------------
+   Set the active theme in src/data/site.ts (`theme:`). The value is written to
+   <html data-theme="..."> and swaps the tokens below.
+
+   Themes may change accent colour, type pairing, spacing rhythm, hero
+   composition, image cropping, card treatment, section backgrounds and border
+   treatment. They must NOT change navigation structure, information
+   hierarchy, legal disclosures, tracking or accessibility.
+
+   Every accent below has been chosen to clear WCAG AA (4.5:1) for body text
+   on the paper background, and AA large for headings.
+   =========================================================================== */
+
+/* ---------- 0. Fallbacks (overridden by each theme below) ----------------- */
+:root {
+  --hero-aspect-desktop: 21 / 9;
+  --hero-aspect-mobile: 4 / 5;
+  /* Ratio expressed as percentage padding — see the note in Hero.astro. */
+  --hero-pad-desktop: 42.857%;
+  --hero-pad-mobile: 125%;
+}
+
+/* ---------- 1. Urban Editorial ------------------------------------------- */
+/* Bronze accent, high-contrast serif display, tight rhythm, wide cinematic
+   hero crop, hairline-bordered flat cards. The default. */
+
+[data-theme='urban-editorial'] {
+  --c-paper: #fbfaf7;
+  --c-paper-2: #f4f1ea;
+  --c-stone: #eeeae1;
+  --c-line: #ddd7cb;
+  --c-line-strong: #c6bfaf;
+
+  --c-accent: #8a6a3b;
+  --c-accent-ink: #6d5330;
+  --c-accent-soft: #f2ebdd;
+  --c-accent-on-dark: #cba875;
+
+  --font-display:
+    'Canela', 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia,
+    'Times New Roman', serif;
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+
+  --rhythm: 1;
+  --card-bg: #ffffff;
+  --card-border: 1px solid var(--c-line);
+  --card-radius: 3px;
+  --card-shadow: none;
+  --image-radius: 3px;
+  --section-alt-bg: var(--c-paper-2);
+  --hero-aspect-desktop: 21 / 9;
+  --hero-aspect-mobile: 4 / 5;
+  --hero-pad-desktop: 42.857%;
+  --hero-pad-mobile: 125%;
+}
+
+/* ---------- 2. Garden Contemporary --------------------------------------- */
+/* Deep foliage-green accent, humanist sans display, looser rhythm, softer
+   4:3 crops, cards on a warm tinted panel with a subtle shadow. */
+
+[data-theme='garden-contemporary'] {
+  --c-paper: #fbfbf8;
+  --c-paper-2: #f1f2ec;
+  --c-stone: #e8eae1;
+  --c-line: #d8dbcf;
+  --c-line-strong: #bcc0b0;
+
+  --c-accent: #3f6b4a;
+  --c-accent-ink: #33563b;
+  --c-accent-soft: #e6eee6;
+  --c-accent-on-dark: #93c2a0;
+
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+
+  --rhythm: 1.12;
+  --card-bg: #ffffff;
+  --card-border: 1px solid transparent;
+  --card-radius: 6px;
+  --card-shadow: 0 10px 30px -22px rgb(27 40 30 / 0.4);
+  --image-radius: 6px;
+  --section-alt-bg: var(--c-paper-2);
+  --hero-aspect-desktop: 16 / 9;
+  --hero-aspect-mobile: 4 / 5;
+  --hero-pad-desktop: 56.25%;
+  --hero-pad-mobile: 125%;
+}
+
+[data-theme='garden-contemporary'] h1,
+[data-theme='garden-contemporary'] h2 {
+  letter-spacing: -0.015em;
+}
+
+/* ---------- 3. Coastal Minimal -------------------------------------------- */
+/* Cool grey-blue accent, cooler paper, airy rhythm, tall 4:5 crops, borderless
+   cards separated by hairlines only. */
+
+[data-theme='coastal-minimal'] {
+  --c-paper: #fcfcfb;
+  --c-paper-2: #f2f4f4;
+  --c-stone: #e9edee;
+  --c-line: #dbe0e1;
+  --c-line-strong: #bcc4c6;
+
+  --c-ink: #16191a;
+  --c-ink-2: #35393b;
+  --c-ink-3: #5d6365;
+
+  --c-accent: #3f6470;
+  --c-accent-ink: #33525c;
+  --c-accent-soft: #e6eef0;
+  --c-accent-on-dark: #9dc3ce;
+
+  --font-display: 'Canela', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+
+  --rhythm: 1.2;
+  --card-bg: transparent;
+  --card-border: 1px solid var(--c-line);
+  --card-radius: 0px;
+  --card-shadow: none;
+  --image-radius: 0px;
+  --section-alt-bg: var(--c-paper-2);
+  --hero-aspect-desktop: 16 / 9;
+  --hero-aspect-mobile: 3 / 4;
+  --hero-pad-desktop: 56.25%;
+  --hero-pad-mobile: 133.333%;
+}
+
+[data-theme='coastal-minimal'] .btn {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: var(--step-0);
+}

@@ -1,0 +1,46 @@
+---
+/**
+ * SECTION HEADER
+ * Editorial header used by every section so numbering, spacing and type
+ * hierarchy stay consistent across the page.
+ */
+interface Props {
+  /** Two-digit editorial index, e.g. '01'. */
+  index?: string;
+  eyebrow: string;
+  title: string;
+  lede?: string;
+  /** Splits title (left) and lede (right) on wide viewports. */
+  split?: boolean;
+  id?: string;
+}
+
+const { index, eyebrow, title, lede, split = false, id } = Astro.props;
+---
+
+<header class={`section-head${split ? ' section-head--split' : ''}`}>
+  <div>
+    <p class="eyebrow">{index ? `${index} — ${eyebrow}` : eyebrow}</p>
+    <h2 class="section-title" id={id}>{title}</h2>
+  </div>
+  {
+    (lede || Astro.slots.has('default')) && (
+      <div class="section-head__body">
+        {lede && <p class="section-lede">{lede}</p>}
+        <slot />
+      </div>
+    )
+  }
+</header>
+
+<style>
+  .section-head > div:first-child {
+    display: grid;
+    gap: var(--sp-3);
+  }
+
+  .section-head__body {
+    display: grid;
+    gap: var(--sp-4);
+  }
+</style>

@@ -1,0 +1,187 @@
+---
+/**
+ * LEGAL PAGE LAYOUT
+ * Narrow measure, generous leading, real headings — legal text should be
+ * comfortable to read, not buried in 10px grey type.
+ */
+import BaseLayout from './BaseLayout.astro';
+import { site } from '../data/site';
+import { agent } from '../data/agent';
+import { project } from '../data/project';
+import { formatDate, isoDate } from '../utils/format';
+import { buildGraph } from '../utils/structuredData';
+
+interface Props {
+  title: string;
+  description: string;
+  pathname: string;
+  heading: string;
+  intro?: string;
+  /** Show the "this is a template" banner. True for all legal pages. */
+  showTemplateNotice?: boolean;
+}
+
+const { title, description, pathname, heading, intro, showTemplateNotice = true } = Astro.props;
+
+const updated = formatDate(project.lastUpdated);
+const updatedIso = isoDate(project.lastUpdated);
+
+const jsonLd = buildGraph({
+  pathname,
+  title,
+  description,
+  breadcrumbs: [
+    { name: 'Home', path: '/' },
+    { name: heading, path: pathname },
+  ],
+});
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  pathname={pathname}
+  jsonLd={jsonLd}
+  showSectionNav={false}
+>
+  <article class="legal section">
+    <div class="container container--narrow">
+      <nav class="legal__crumbs" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="/">Home</a></li>
+          <li aria-current="page">{heading}</li>
+        </ol>
+      </nav>
+
+      <h1 class="legal__title">{heading}</h1>
+      {intro && <p class="legal__intro">{intro}</p>}
+
+      <p class="legal__meta fineprint">
+        {
+          updated && (
+            <>
+              Last updated <time datetime={updatedIso ?? undefined}>{updated}</time>.{' '}
+            </>
+          )
+        }
+        Operated by {agent.fullName}, CEA registration {agent.ceaRegistrationNumber},
+        {' '}{agent.agencyName}, estate agency licence {agent.agencyLicenceNumber}.
+      </p>
+
+      {
+        showTemplateNotice && (
+          <p class="notice legal__notice">
+            <strong>This is a template.</strong> {site.legal.legalTemplateNotice}
+          </p>
+        )
+      }
+
+      <div class="legal__body">
+        <slot />
+      </div>
+
+      <p class="legal__back">
+        <a class="link" href="/">Return to the main page</a>
+      </p>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .legal__crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    font-size: var(--step--1);
+    color: var(--c-ink-3);
+    margin-bottom: var(--sp-5);
+  }
+
+  .legal__crumbs li + li::before {
+    content: '/';
+    margin-right: var(--sp-2);
+    color: var(--c-ink-4);
+  }
+
+  .legal__title {
+    font-size: var(--step-4);
+    margin-bottom: var(--sp-4);
+  }
+
+  .legal__intro {
+    font-size: var(--step-1);
+    color: var(--c-ink-3);
+    margin-bottom: var(--sp-4);
+  }
+
+  .legal__meta {
+    padding-bottom: var(--sp-5);
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  .legal__notice {
+    margin-top: var(--sp-5);
+  }
+
+  .legal__body {
+    margin-top: var(--sp-6);
+    font-size: var(--step-0);
+    line-height: 1.72;
+  }
+
+  .legal__body :global(h2) {
+    font-size: var(--step-2);
+    margin-top: var(--sp-7);
+    margin-bottom: var(--sp-3);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--c-line);
+  }
+
+  .legal__body :global(h3) {
+    font-family: var(--font-sans);
+    font-size: var(--step-0);
+    font-weight: 600;
+    margin-top: var(--sp-5);
+    margin-bottom: var(--sp-2);
+  }
+
+  .legal__body :global(p) {
+    margin-bottom: var(--sp-4);
+    color: var(--c-ink-2);
+  }
+
+  .legal__body :global(ul),
+  .legal__body :global(ol) {
+    display: grid;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+    padding-left: 1.25rem;
+    list-style: disc;
+    color: var(--c-ink-2);
+  }
+
+  .legal__body :global(ol) {
+    list-style: decimal;
+  }
+
+  /*
+   * Prose links only. A .btn carries its own foreground via --btn-fg, and this
+   * rule is specific enough to beat it — which put accent-ink text on a solid
+   * button background at 1.4:1 until the exemption was added.
+   */
+  .legal__body :global(a:not(.btn)) {
+    color: var(--c-accent-ink);
+  }
+
+  .legal__body :global(dl) {
+    display: grid;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+  }
+
+  .legal__back {
+    margin-top: var(--sp-7);
+    padding-top: var(--sp-5);
+    border-top: 1px solid var(--c-line);
+  }
+</style>

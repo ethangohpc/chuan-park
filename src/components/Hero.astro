@@ -1,0 +1,447 @@
+---
+/**
+ * HERO
+ * ---------------------------------------------------------------------------
+ * Specific, ad-relevant headline; factual sub-line; the facts a visitor
+ * arriving from a "[project] price" search needs immediately; two CTAs; and the
+ * last-updated date. The independent-website disclosure is carried by the
+ * footer, the mobile menu and every legal page.
+ *
+ * The image is served as <picture> with a separate mobile crop, explicit
+ * dimensions and fetchpriority="high" — it is the LCP element, so frame 1 is
+ * eager and everything else waits.
+ *
+ * ANIMATION. `media.heroFrames` adds further stills that cross-fade over
+ * frame 1 on a slow loop, under a single shared Ken Burns zoom so the layers
+ * stay in register. It is CSS only — no JavaScript, no video, no layout work
+ * per frame: `opacity` and `transform` are the only properties that animate,
+ * both of which the compositor handles without repainting.
+ *
+ * It degrades in every direction that matters. No JS: unaffected. Reduced
+ * motion: both animations are switched off and frame 1 sits still. Empty
+ * `heroFrames`: the markup collapses to the single still image it was before.
+ */
+import { project, verified, isPlaceholder } from '../data/project';
+import { whatsappHref } from '../data/agent';
+import { interpolate } from '../utils/format';
+
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
+const location = verified(project.locality) ?? verified(project.district) ?? '[LOCATION]';
+
+const headline = interpolate(project.content.heroHeadline, {
+  'PROJECT NAME': projectName,
+  LOCATION: location,
+});
+const rawSupporting = project.content.heroSupporting;
+const supporting = isPlaceholder(rawSupporting)
+  ? ''
+  : interpolate(rawSupporting, { 'PROJECT NAME': projectName });
+const rawSub = project.content.heroSubheadline;
+const subheadline = isPlaceholder(rawSub)
+  ? ''
+  : interpolate(rawSub, { 'PROJECT NAME': projectName, LOCATION: location });
+
+/**
+ * A compact bedroom range rather than every layout name — a project with a
+ * wide mix would otherwise spill three lines of type names into the hero.
+ */
+const bedroomCounts = project.unitTypes.map((u) => u.bedrooms).filter((n) => n > 0);
+const hasPenthouse = project.unitTypes.some((u) => u.category === 'penthouse');
+const unitSummary = bedroomCounts.length
+  ? `${Math.min(...bedroomCounts)} – ${Math.max(...bedroomCounts)} Bedroom${hasPenthouse ? ' · Penthouse' : ''}`
+  : null;
+
+// Only facts that have been filled in are shown. Nothing is invented.
+const heroFacts = [
+  { label: 'Location', value: verified(project.streetAddress) ?? verified(project.locality) },
+  { label: 'District', value: verified(project.district) },
+  { label: 'Tenure', value: verified(project.tenure) },
+  { label: 'Unit types', value: unitSummary },
+  { label: 'TOP', value: verified(project.expectedTop) },
+  /*
+   * `project.projectStatus` is deliberately NOT in this row. It is still
+   * recorded in the config and still stamped on the Price and Floorplans
+   * sections, where it sits next to the numbers it qualifies — a sell-through
+   * figure in the hero read as pressure rather than as information.
+   */
+].filter((f): f is { label: string; value: string } => Boolean(f.value));
+
+/* Opens WhatsApp directly, so it is tracked as click_whatsapp rather than as a
+   second book_showflat — the visitor is doing a different thing. */
+const wa = whatsappHref(
+  interpolate(project.contact.whatsappMessages.general, { 'PROJECT NAME': projectName })
+);
+
+const media = project.media;
+
+/*
+ * Only the frames that are actually configured. Two extra frames is the sweet
+ * spot: enough that the hero moves, few enough that the loop does not read as
+ * a slideshow demanding attention while someone is trying to read the price.
+ */
+const heroFrames = media.heroFrames ?? [];
+---
+
+<section class="hero" id="top">
+  <div class={`hero__media${heroFrames.length ? ' is-animated' : ''}`}>
+    <picture class="hero__frame">
+      <source
+        media="(max-width: 47.99rem)"
+        srcset={media.heroImageMobile}
+        width={media.heroImageMobileWidth}
+        height={media.heroImageMobileHeight}
+      />
+      <img
+        src={media.heroImage}
+        width={media.heroImageWidth}
+        height={media.heroImageHeight}
+        alt={interpolate(media.heroImageAlt, { 'PROJECT NAME': projectName })}
+        fetchpriority="high"
+        decoding="async"
+      />
+    </picture>
+
+    {
+      heroFrames.map((frame, i) => (
+        <picture class={`hero__frame hero__frame--${i + 2}`} aria-hidden="true">
+          <source
+            media="(max-width: 47.99rem)"
+            srcset={frame.imageMobile}
+            width={frame.mobileWidth}
+            height={frame.mobileHeight}
+          />
+          <img
+            src={frame.image}
+            width={frame.width}
+            height={frame.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </picture>
+      ))
+    }
+
+    <div class="hero__scrim" aria-hidden="true"></div>
+  </div>
+
+  <div class="hero__content container">
+    <h1 class="hero__title">{headline}</h1>
+
+    {subheadline && <p class="hero__sub">{subheadline}</p>}
+
+    {
+      heroFacts.length > 0 && (
+        <ul class="hero__facts">
+          {heroFacts.map((fact) => (
+            <li>
+              <span class="hero__facts-label">{fact.label}</span>
+              <span class="hero__facts-value">{fact.value}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    {supporting && <p class="hero__supporting">{supporting}</p>}
+
+    <div class="hero__actions">
+      <a
+        class="btn btn--accent"
+        href="#contact"
+        data-track="book_showflat"
+        data-track-location="hero"
+      >
+        Book Showflat
+      </a>
+      {
+        wa && (
+          <a
+            class="btn btn--whatsapp"
+            href={wa}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-track="click_whatsapp"
+            data-track-location="hero"
+          >
+            <svg class="btn__glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                fill="currentColor"
+                d="M12.04 2A9.9 9.9 0 0 0 2.13 11.9c0 1.75.46 3.46 1.32 4.96L2 22l5.28-1.38a9.86 9.86 0 0 0 4.76 1.21h.01a9.9 9.9 0 0 0 9.9-9.9A9.9 9.9 0 0 0 12.04 2m0 18.15h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.22 8.22 0 0 1-1.26-4.39 8.23 8.23 0 1 1 8.23 8.25m4.52-6.16c-.25-.12-1.47-.72-1.69-.8s-.4-.13-.56.13-.64.8-.79.97-.29.19-.54.06a6.7 6.7 0 0 1-3.35-2.93c-.25-.44.25-.4.72-1.36a.46.46 0 0 0-.02-.43c-.07-.12-.56-1.34-.76-1.84s-.4-.41-.56-.42h-.47a.9.9 0 0 0-.66.31 2.76 2.76 0 0 0-.86 2.05 4.8 4.8 0 0 0 1 2.54 10.98 10.98 0 0 0 4.21 3.72c1.56.68 2.18.73 2.96.62.48-.07 1.47-.6 1.67-1.19s.2-1.08.15-1.19-.23-.18-.48-.3"
+              />
+            </svg>
+            <span>WhatsApp us</span>
+            <span class="visually-hidden">(opens WhatsApp in a new tab)</span>
+          </a>
+        )
+      }
+    </div>
+
+    {
+      /*
+      The last-updated line and the "prices change" disclaimer are not repeated
+      here. Both still appear against the figures themselves — in the Price
+      section, on the Floorplans availability note and in the footer — which is
+      where a visitor is actually reading a number.
+    */
+    }
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    background: var(--c-inverse);
+    color: var(--c-on-inverse);
+    display: grid;
+    /*
+     * minmax(0, 1fr), not the default `auto` column. An auto track grows to
+     * its items' max-content width, so one long unwrapped line inside the hero
+     * widens the whole section past the viewport — and Chrome responds by
+     * expanding the mobile layout viewport, rendering the entire page zoomed
+     * out. Capping the track at 0 minimum forces the content to wrap instead.
+     */
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /*
+   * Ratio spacer. It sets the MINIMUM hero height from the theme's aspect
+   * ratio while the copy, sharing the same grid cell, can push the hero
+   * taller. The media is then positioned absolutely so the image always
+   * covers the full height — a grid item carrying `aspect-ratio` refuses to
+   * stretch, which left a band of flat colour beneath a short image.
+   */
+  .hero::before {
+    content: '';
+    grid-area: 1 / 1;
+    /*
+     * Percentage padding, deliberately NOT `aspect-ratio`. A grid item that
+     * combines `aspect-ratio` with `min-height` derives its WIDTH from the
+     * ratio (34rem x 21/9 = 1269px) and refuses to stretch, forcing the page
+     * wider than the viewport — Chrome then renders the whole page zoomed
+     * out on mobile. Percentage padding resolves against the containing
+     * block's inline size instead, so a zero-width spacer expresses the ratio
+     * without ever influencing the track width.
+     */
+    width: 0;
+    padding-top: var(--hero-pad-mobile);
+    min-height: 30rem;
+    pointer-events: none;
+  }
+
+  .hero__content {
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+
+  /*
+   * The aspect ratio lives on the wrapper, not the image, and the picture is
+   * absolutely positioned inside it. That way the ratio sets a MINIMUM hero
+   * height, but when the copy is taller than the ratio allows, the grid row
+   * grows and the image stretches to cover it. Putting the ratio on the <img>
+   * instead leaves a band of flat colour under a short image.
+   */
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .hero__media picture {
+    position: absolute;
+    inset: 0;
+    display: block;
+  }
+
+  .hero__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /*
+   * THE CROSS-FADE
+   * -------------------------------------------------------------------------
+   * Frame 1 is the base layer and never animates its opacity — whatever else
+   * happens, something is always painted behind the headline. Frames 2+ stack
+   * on top and fade IN one at a time, then all fade OUT together at the end of
+   * the cycle, which dissolves the stack back to frame 1 without a hard cut.
+   *
+   * Timings are derived from --hero-cycle so the sequence stays coherent if it
+   * is retuned: with a 24s cycle, each frame holds for 8s and every fade takes
+   * 1.5s (6.25% of the cycle).
+   */
+  .hero__media.is-animated {
+    --hero-cycle: 24s;
+  }
+
+  .hero__media.is-animated .hero__frame--2,
+  .hero__media.is-animated .hero__frame--3 {
+    opacity: 0;
+    will-change: opacity;
+  }
+
+  .hero__media.is-animated .hero__frame--2 {
+    animation: heroFrame2 var(--hero-cycle) linear infinite;
+  }
+
+  .hero__media.is-animated .hero__frame--3 {
+    animation: heroFrame3 var(--hero-cycle) linear infinite;
+  }
+
+  @keyframes heroFrame2 {
+    0%,
+    27.08% {
+      opacity: 0;
+    }
+    33.33%,
+    93.75% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes heroFrame3 {
+    0%,
+    60.42% {
+      opacity: 0;
+    }
+    66.67%,
+    93.75% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /*
+   * One slow zoom applied to every layer at once, so the frames stay in
+   * register through a cross-fade. `alternate` means it breathes in and out
+   * rather than snapping back to 1 at the loop point.
+   */
+  .hero__media.is-animated img {
+    animation: heroZoom calc(var(--hero-cycle) * 2) ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  @keyframes heroZoom {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.07);
+    }
+  }
+
+  /*
+   * Reduced motion is not a degraded mode here: frame 1 is a finished hero
+   * image on its own, so the honest response is to show it and stop.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    .hero__media.is-animated .hero__frame--2,
+    .hero__media.is-animated .hero__frame--3,
+    .hero__media.is-animated img {
+      animation: none;
+    }
+    .hero__media.is-animated .hero__frame--2,
+    .hero__media.is-animated .hero__frame--3 {
+      opacity: 0;
+    }
+  }
+
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--hero-overlay);
+  }
+
+  .hero__content {
+    position: relative;
+    z-index: 1;
+    align-self: end;
+    display: grid;
+    gap: var(--sp-4);
+    padding-block: var(--sp-7) calc(var(--sp-8) + env(safe-area-inset-bottom));
+    max-width: 62rem;
+  }
+
+  .hero__title {
+    font-size: var(--step-5);
+    color: var(--c-on-inverse);
+    max-width: 20ch;
+    margin: 0;
+  }
+
+  .hero__sub {
+    font-size: var(--step-1);
+    color: var(--c-on-inverse);
+    max-width: 46ch;
+    margin: 0;
+  }
+
+  .hero__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3) var(--sp-6);
+    padding-block: var(--sp-4);
+    border-top: 1px solid rgb(244 241 234 / 0.2);
+    border-bottom: 1px solid rgb(244 241 234 / 0.2);
+    margin-block: var(--sp-2);
+  }
+
+  .hero__facts li {
+    display: grid;
+    gap: 2px;
+  }
+
+  .hero__facts-label {
+    font-size: 0.66rem;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--c-on-inverse-2);
+  }
+
+  .hero__facts-value {
+    font-size: var(--step-0);
+    color: var(--c-on-inverse);
+  }
+
+  .hero__supporting {
+    max-width: 58ch;
+    color: var(--c-on-inverse-2);
+    margin: 0;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    margin-top: var(--sp-2);
+  }
+
+  .hero__actions .btn {
+    flex: 1 1 14rem;
+  }
+
+  @media (min-width: 48rem) {
+    .hero::before {
+      padding-top: var(--hero-pad-desktop);
+      min-height: 34rem;
+    }
+
+    .hero__actions .btn {
+      flex: 0 0 auto;
+    }
+  }
+
+  @media (min-width: 62rem) {
+    .hero__content {
+      gap: var(--sp-5);
+      padding-block: var(--sp-9);
+    }
+  }
+</style>

@@ -1,0 +1,825 @@
+---
+/**
+ * CONTACT / BOOK SHOWFLAT
+ * ---------------------------------------------------------------------------
+ * Primary conversion. Designed to be honest and to work without JavaScript.
+ *
+ * NO-JS PATH
+ *   Normal form POST to /api/lead. The endpoint validates, delivers, and
+ *   either 303-redirects to /thank-you or returns a 400 page listing what
+ *   needs fixing. Nothing is faked.
+ *
+ * JS PATH
+ *   The submit is intercepted, sent with fetch, and errors are rendered inline
+ *   with an accessible error summary. On a genuine 200 the browser navigates
+ *   to /thank-you. A success message is NEVER shown for a failed request.
+ *
+ * ANTI-SPAM
+ *   A honeypot field (hidden from people and from screen readers) plus a
+ *   minimum fill-time check. Rate limiting lives in the endpoint. Cloudflare
+ *   Turnstile is optional and off until its two keys are set — see below.
+ *
+ * ATTRIBUTION
+ *   utm_*, gclid, gbraid, wbraid, landing page, referrer and a timestamp are
+ *   captured into hidden fields. No PII is ever put into a URL.
+ */
+import SectionHeader from './SectionHeader.astro';
+import ContactButtons from './ContactButtons.astro';
+import { project } from '../data/project';
+import { unitGroups } from '../utils/unitGroups';
+import { agent } from '../data/agent';
+import { INTERESTS } from '../utils/validation';
+
+/*
+ * The adviser's identification sits in this section rather than in a section of
+ * its own: name, role, agency and CEA number, with the full profile — including
+ * the CEA Public Register link — one click away at /about-ethan.
+ */
+/*
+ * The same six sizes the Price and Floorplans sections show, so a visitor is
+ * offered the choices they were just reading about — not fifteen developer
+ * type names. Retail appears only while shops are actually available.
+ */
+const unitOptions = [
+  ...unitGroups().map((g) => g.name),
+  /* Gated on the same switch as the Price table's retail row, so the form
+     never offers a unit type the page does not list. */
+  ...(project.availability.listRetail && (project.availability.shopsLeft ?? 0) > 0 ? ['Shop'] : []),
+];
+
+// Development-mode banner: the form only says it is connected when it is.
+// Evaluated at build time; the endpoint re-reads the value at request time.
+const deliveryMode = (
+  (typeof globalThis.process !== 'undefined' && globalThis.process.env?.LEAD_DELIVERY_MODE) ||
+  import.meta.env.LEAD_DELIVERY_MODE ||
+  'console'
+).toLowerCase();
+const isSimulated = !['webhook', 'email', 'telegram'].includes(deliveryMode);
+
+/*
+ * Cloudflare Turnstile. The widget appears only when PUBLIC_TURNSTILE_SITE_KEY
+ * is set, and /api/lead only enforces it when TURNSTILE_SECRET_KEY is set —
+ * so the form is unchanged until both are configured. Set them together: a
+ * widget with no server check is decoration, and a server check with no widget
+ * refuses every submission.
+ */
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
+
+/*
+ * One consent, and it covers only this enquiry. The optional marketing opt-in
+ * was removed: with no box to tick, `consentMarketing` always arrives false, so
+ * a lead from this form is never a basis for sending marketing. Restoring it
+ * means restoring the checkbox here AND the wording in the Privacy Policy.
+ */
+const consentText = `By submitting this enquiry, I confirm that I have read the Privacy Policy and consent to Ethan Goh of ${agent.agencyName} contacting me regarding this property enquiry by WhatsApp, phone or email.`;
+---
+
+<section class="section section--alt" id="contact" aria-labelledby="contact-title">
+  <div class="container">
+    <div class="contact__layout">
+      <div class="contact__intro">
+        <SectionHeader
+          eyebrow="Get in touch"
+          title="Book a showflat viewing"
+          lede={`Share a few details and ${agent.displayName} will arrange a viewing by appointment, send the latest price list and floorplans, and answer your questions. There is no obligation.`}
+          id="contact-title"
+        />
+
+        <ContactButtons message="showflat" location="contact" />
+
+        <div class="adviser">
+          {
+            /* A square, face-centred crop rather than the tall portrait: a
+              centre crop of a 400x514 headshot lands on the tie, not the face. */
+          }
+          <img
+            class="adviser__portrait"
+            src="/images/agent/ethan-goh-avatar.webp"
+            width="320"
+            height="320"
+            alt={agent.profileImageAlt}
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="adviser__id">
+            <p class="adviser__name">{agent.fullName}</p>
+            <p class="adviser__meta">{agent.jobTitle}</p>
+            <p class="adviser__meta">{agent.agencyName}</p>
+            <p class="adviser__meta">CEA Reg: {agent.ceaRegistrationNumber}</p>
+          </div>
+          <a class="adviser__verify" href="/about-ethan">
+            Meet your adviser <span aria-hidden="true">→</span>
+          </a>
+        </div>
+
+        <p class="fineprint contact__note">{project.contact.responseExpectation}</p>
+      </div>
+
+      <div class="contact__form-wrap">
+        {
+          isSimulated && (
+            <p class="notice notice--dev">
+              <strong>Development mode.</strong> LEAD_DELIVERY_MODE is not set to a live
+              destination, so submissions are logged to the server console and are{' '}
+              <strong>not</strong> delivered to any CRM or inbox. Set LEAD_DELIVERY_MODE in the
+              environment before going live — see .env.example.
+            </p>
+          )
+        }
+
+        <form
+          class="lead-form"
+          id="lead-form"
+          method="post"
+          action="/api/lead"
+          novalidate
+          data-lead-form
+        >
+          {
+            /* Accessible error summary — populated on a failed submit, focused
+              programmatically so screen-reader users hear it immediately. */
+          }
+          <div
+            class="form-errors"
+            id="form-errors"
+            role="alert"
+            tabindex="-1"
+            hidden
+            data-error-summary
+          >
+            <h3>There is a problem</h3>
+            <ul data-error-list></ul>
+          </div>
+
+          <div class="field">
+            <label for="name">Full name <span class="req">(required)</span></label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              autocomplete="name"
+              required
+              maxlength="80"
+              aria-describedby="name-error"
+            />
+            <p class="field__error" id="name-error" data-error-for="name" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="phone">
+              Singapore mobile number <span class="req">(required)</span>
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              inputmode="tel"
+              autocomplete="tel-national"
+              placeholder="9123 4567"
+              required
+              aria-describedby="phone-hint phone-error"
+            />
+            <p class="field__hint" id="phone-hint">8 digits beginning with 8 or 9. +65 optional.</p>
+            <p class="field__error" id="phone-error" data-error-for="phone" hidden></p>
+          </div>
+
+          <fieldset class="field field--group">
+            <legend>Preferred Unit Type <span class="opt">(optional)</span></legend>
+            <div class="check-grid">
+              {
+                unitOptions.map((option) => (
+                  <label class="check-tile">
+                    <input type="checkbox" name="unitTypes" value={option} />
+                    <span>{option}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </fieldset>
+
+          <fieldset class="field field--group">
+            <legend>I&#8217;m interested in <span class="req">(required)</span></legend>
+            <div class="check-stack">
+              {
+                INTERESTS.map((option) => (
+                  <label class="check-tile">
+                    <input type="checkbox" name="interests" value={option} />
+                    <span>{option}</span>
+                  </label>
+                ))
+              }
+            </div>
+            <p class="field__error" data-error-for="interests" hidden></p>
+          </fieldset>
+
+          <div class="field">
+            <label for="message">Message <span class="opt">(optional)</span></label>
+            <textarea
+              id="message"
+              name="message"
+              rows="4"
+              maxlength="1500"
+              placeholder="Budget range, timeline, whether you currently own a property, anything you would like addressed."
+            ></textarea>
+            <p class="field__error" id="message-error" data-error-for="message" hidden></p>
+          </div>
+
+          {/* Honeypot — hidden from people and assistive technology. */}
+          <div class="hp" aria-hidden="true">
+            <label for="company">Company (leave this field empty)</label>
+            <input type="text" id="company" name="company" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <div class="consent">
+            <label class="check">
+              <input type="checkbox" name="consentEnquiry" value="yes" required />
+              <span>
+                {consentText.split('Privacy Policy')[0]}
+                <a class="link" href="/privacy">Privacy Policy</a>
+                {consentText.split('Privacy Policy')[1]}
+              </span>
+            </label>
+            <p class="field__error" data-error-for="consentEnquiry" hidden></p>
+          </div>
+
+          {
+            /* Attribution — populated client-side; the server also records the
+              Referer header and its own timestamp. Never contains PII. */
+          }
+          <input type="hidden" name="utm_source" data-attr="utm_source" />
+          <input type="hidden" name="utm_medium" data-attr="utm_medium" />
+          <input type="hidden" name="utm_campaign" data-attr="utm_campaign" />
+          <input type="hidden" name="utm_term" data-attr="utm_term" />
+          <input type="hidden" name="utm_content" data-attr="utm_content" />
+          <input type="hidden" name="gclid" data-attr="gclid" />
+          <input type="hidden" name="gbraid" data-attr="gbraid" />
+          <input type="hidden" name="wbraid" data-attr="wbraid" />
+          <input type="hidden" name="landingPage" data-attr="landingPage" />
+          <input type="hidden" name="referrer" data-attr="referrer" />
+          <input type="hidden" name="renderedAt" data-attr="renderedAt" />
+
+          {
+            turnstileSiteKey && (
+              <div
+                class="cf-turnstile lead-form__turnstile"
+                data-sitekey={turnstileSiteKey}
+                data-theme="light"
+                data-action="lead-form"
+              />
+            )
+          }
+
+          <button
+            type="submit"
+            class="btn btn--accent btn--block lead-form__submit"
+            data-track="form_submit"
+            data-track-location="contact"
+          >
+            <span data-submit-label>Request Appointment</span>
+            <span class="spinner" data-spinner hidden aria-hidden="true"></span>
+          </button>
+
+          <p class="fineprint lead-form__foot">
+            {project.contact.responseExpectation} Your details are used to respond to this enquiry and
+            are handled as described in the <a class="link" href="/privacy">Privacy Policy</a>.
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+{
+  /* Loaded only when Turnstile is configured. It is a security control rather
+    than analytics, so it is not gated behind the consent notice. */
+  turnstileSiteKey && (
+    <script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js" />
+  )
+}
+
+<style>
+  .contact__layout {
+    display: grid;
+    gap: var(--sp-7);
+  }
+
+  .contact__intro {
+    display: grid;
+    gap: var(--sp-5);
+    align-content: start;
+  }
+
+  .contact__form-wrap {
+    display: grid;
+    gap: var(--sp-5);
+  }
+
+  .adviser {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--sp-2) var(--sp-4);
+    align-items: center;
+    padding: var(--sp-4);
+    border: 1px solid var(--c-line);
+    border-radius: var(--card-radius);
+  }
+
+  .adviser__portrait {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: none;
+  }
+
+  .adviser__name {
+    font-weight: 500;
+    color: var(--c-ink);
+  }
+
+  .adviser__meta {
+    font-size: var(--step--1);
+    color: var(--c-ink-3);
+  }
+
+  .adviser__verify {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: var(--sp-2);
+    font-size: var(--step--1);
+    /* The light-surface accent. --c-accent-on-dark measured 2.0:1 here once the
+       section stopped being dark. */
+    color: var(--c-accent-ink);
+  }
+
+  .lead-form {
+    display: grid;
+    gap: var(--sp-5);
+    padding: var(--sp-6);
+    background: var(--c-paper);
+    border: 1px solid var(--c-line);
+    border-radius: var(--card-radius);
+  }
+
+  .field {
+    display: grid;
+    gap: var(--sp-2);
+  }
+
+  .field--group {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  label,
+  legend {
+    font-size: var(--step--1);
+    letter-spacing: 0.02em;
+    color: var(--c-ink);
+  }
+
+  legend {
+    padding: 0;
+    margin-bottom: var(--sp-3);
+  }
+
+  .req {
+    color: var(--c-ink-3);
+  }
+
+  .opt {
+    color: var(--c-ink-3);
+  }
+
+  input[type='text'],
+  input[type='tel'],
+  input[type='email'],
+  input[type='date'],
+  select,
+  textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.7em 0.85em;
+    background: var(--c-paper);
+    border: 1px solid var(--c-line-strong, var(--c-line));
+    border-radius: var(--radius);
+    color: var(--c-ink);
+    font-size: var(--step-0);
+    transition: border-color var(--dur) var(--ease);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 7rem;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(185 179 165 / 0.75);
+  }
+
+  input:hover,
+  select:hover,
+  textarea:hover {
+    border-color: var(--c-accent);
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 1px;
+    border-color: var(--c-accent);
+  }
+
+  select {
+    appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, currentColor 50%),
+      linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position:
+      calc(100% - 20px) calc(50% + 2px),
+      calc(100% - 14px) calc(50% + 2px);
+    background-size:
+      6px 6px,
+      6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 2.75rem;
+  }
+
+  option {
+    color: #1b1a18;
+  }
+
+  .field__hint {
+    font-size: var(--step--2);
+    color: var(--c-ink-3);
+  }
+
+  .field__error {
+    font-size: var(--step--1);
+    color: var(--c-negative);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-2);
+  }
+
+  .field__error[hidden] {
+    display: none;
+  }
+
+  .field__error::before {
+    content: '!';
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 1.15em;
+    height: 1.15em;
+    margin-top: 0.2em;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: 0.75em;
+    font-weight: 700;
+  }
+
+  [aria-invalid='true'] {
+    border-color: #d8867d !important;
+  }
+
+  .check {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    cursor: pointer;
+    line-height: 1.55;
+  }
+
+  /*
+   * Unit types wrap into as many columns as fit; the interests read as a
+   * stacked list because their labels are full phrases rather than two words.
+   */
+  .check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+    gap: var(--sp-3);
+  }
+
+  .check-stack {
+    display: grid;
+    gap: var(--sp-3);
+  }
+
+  /* The whole tile is the hit target, not just the 20px box beside it. */
+  .check-tile {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 48px;
+    padding: 0.6em 0.9em;
+    border: 1px solid var(--c-line-strong, var(--c-line));
+    border-radius: var(--radius);
+    background: var(--c-paper);
+    cursor: pointer;
+    line-height: 1.4;
+  }
+
+  .check-tile:has(input:checked) {
+    border-color: var(--c-accent);
+    background: rgb(138 106 59 / 0.08);
+  }
+
+  .check-tile:has(input:focus-visible) {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+
+  input[type='radio'],
+  input[type='checkbox'] {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    min-height: 0;
+    margin-top: 0.15em;
+    accent-color: var(--c-accent);
+  }
+
+  input[type='radio'] {
+    margin-top: 0;
+  }
+
+  .consent {
+    display: grid;
+    gap: var(--sp-4);
+    padding: var(--sp-5);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    background: var(--c-paper);
+  }
+
+  .check span {
+    font-size: var(--step--1);
+    color: var(--c-ink-3);
+  }
+
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .form-errors {
+    padding: var(--sp-4) var(--sp-5);
+    border: 1px solid #d8867d;
+    border-left-width: 3px;
+    border-radius: var(--radius-sm);
+    background: rgb(216 134 125 / 0.1);
+  }
+
+  .form-errors[hidden] {
+    display: none;
+  }
+
+  .form-errors h3 {
+    font-size: var(--step-1);
+    color: #f4d7d3;
+    margin-bottom: var(--sp-2);
+  }
+
+  .form-errors ul {
+    display: grid;
+    gap: var(--sp-1);
+    font-size: var(--step--1);
+  }
+
+  .form-errors a {
+    color: var(--c-negative);
+  }
+
+  .lead-form__submit {
+    position: relative;
+  }
+
+  .lead-form__submit[aria-busy='true'] {
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  .spinner {
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  .spinner[hidden] {
+    display: none;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  .lead-form__foot {
+    margin: 0;
+    color: var(--c-ink-3);
+  }
+
+  .contact__note {
+    color: var(--c-ink-3);
+    margin: 0;
+  }
+
+  @media (min-width: 62rem) {
+    /* Even halves: the pitch and the form carry the same weight here. */
+    .contact__layout {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--sp-8);
+      align-items: start;
+    }
+  }
+</style>
+
+<script>
+  // -------------------------------------------------------------------------
+  // Progressive enhancement. Without this script the form still posts to
+  // /api/lead and the server handles validation, delivery and redirection.
+  // -------------------------------------------------------------------------
+  const form = document.querySelector<HTMLFormElement>('[data-lead-form]');
+  if (form) {
+    // Signals that the submit handler is bound. Until this appears, a submit
+    // falls through to the plain form POST — which still works, but shows the
+    // server error page rather than inline errors.
+    form.dataset.enhanced = 'true';
+
+    const summary = form.querySelector<HTMLElement>('[data-error-summary]');
+    const summaryList = form.querySelector<HTMLUListElement>('[data-error-list]');
+    const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    const spinner = form.querySelector<HTMLElement>('[data-spinner]');
+    const submitLabel = form.querySelector<HTMLElement>('[data-submit-label]');
+    const track = (window as unknown as { trackEvent?: (e: string, p?: object) => void })
+      .trackEvent;
+
+    /* --- Attribution capture (no PII, never written to the URL) --- */
+    const params = new URLSearchParams(window.location.search);
+    const attrValues: Record<string, string> = {
+      utm_source: params.get('utm_source') || '',
+      utm_medium: params.get('utm_medium') || '',
+      utm_campaign: params.get('utm_campaign') || '',
+      utm_term: params.get('utm_term') || '',
+      utm_content: params.get('utm_content') || '',
+      gclid: params.get('gclid') || '',
+      gbraid: params.get('gbraid') || '',
+      wbraid: params.get('wbraid') || '',
+      landingPage: window.location.href.split('#')[0]!,
+      referrer: document.referrer || '',
+      renderedAt: String(Date.now()),
+    };
+
+    /* Click IDs survive an internal navigation within the session. */
+    try {
+      for (const key of ['gclid', 'gbraid', 'wbraid', 'utm_source', 'utm_medium', 'utm_campaign']) {
+        if (attrValues[key]) sessionStorage.setItem(`attr_${key}`, attrValues[key]!);
+        else attrValues[key] = sessionStorage.getItem(`attr_${key}`) || '';
+      }
+    } catch {
+      /* storage unavailable — attribution simply falls back to this pageview */
+    }
+
+    form.querySelectorAll<HTMLInputElement>('[data-attr]').forEach((input) => {
+      input.value = attrValues[input.dataset.attr!] ?? '';
+    });
+
+    /* --- form_start fires once, on first meaningful interaction --- */
+    let started = false;
+    form.addEventListener('input', () => {
+      if (started) return;
+      started = true;
+      track?.('form_start', { location: 'contact' });
+    });
+
+    /* --- Error rendering --- */
+    function clearErrors() {
+      form!.querySelectorAll<HTMLElement>('[data-error-for]').forEach((el) => {
+        el.hidden = true;
+        el.textContent = '';
+      });
+      form!.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
+      if (summary) summary.hidden = true;
+      if (summaryList) summaryList.innerHTML = '';
+    }
+
+    function showErrors(errors: Record<string, string>) {
+      clearErrors();
+      const entries = Object.entries(errors);
+      if (!entries.length) return;
+
+      for (const [field, message] of entries) {
+        const target = form!.querySelector<HTMLElement>(`[data-error-for="${field}"]`);
+        if (target) {
+          target.textContent = message;
+          target.hidden = false;
+        }
+        const control = form!.elements.namedItem(field) as HTMLElement | RadioNodeList | null;
+        if (control instanceof HTMLElement) control.setAttribute('aria-invalid', 'true');
+      }
+
+      if (summary && summaryList) {
+        for (const [field, message] of entries) {
+          const li = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = `#${field}`;
+          link.textContent = message;
+          link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const control = form!.querySelector<HTMLElement>(`[name="${field}"]`);
+            control?.focus();
+          });
+          li.appendChild(link);
+          summaryList.appendChild(li);
+        }
+        summary.hidden = false;
+        summary.focus();
+        summary.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+
+      track?.('form_error', { location: 'contact', detail: entries.map(([f]) => f).join(',') });
+    }
+
+    function setBusy(busy: boolean) {
+      if (submit) {
+        submit.setAttribute('aria-busy', String(busy));
+        submit.disabled = busy;
+      }
+      if (spinner) spinner.hidden = !busy;
+      if (submitLabel) submitLabel.textContent = busy ? 'Sending…' : 'Request Appointment';
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearErrors();
+      setBusy(true);
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { accept: 'application/json' },
+        });
+
+        const data = (await response.json().catch(() => null)) as {
+          ok?: boolean;
+          errors?: Record<string, string>;
+          redirect?: string;
+          message?: string;
+        } | null;
+
+        if (response.ok && data?.ok) {
+          // Only now — after a confirmed success — do we count the lead.
+          track?.('generate_lead', { location: 'contact' });
+          // Tells /thank-you the conversion has already been counted.
+          try {
+            sessionStorage.setItem('lead_counted', '1');
+          } catch {
+            /* storage blocked — /thank-you will count it instead */
+          }
+          window.location.href = data.redirect || '/thank-you';
+          return;
+        }
+
+        if (response.status === 429) {
+          showErrors({
+            form:
+              data?.message ||
+              'Too many submissions from this connection. Please try again shortly, or WhatsApp instead.',
+          });
+        } else if (data?.errors) {
+          showErrors(data.errors);
+        } else {
+          showErrors({
+            form:
+              data?.message ||
+              'Your enquiry could not be sent. Please try again, or contact us on WhatsApp or by phone.',
+          });
+        }
+      } catch {
+        showErrors({
+          form: 'No connection to the server. Please check your network and try again, or use WhatsApp.',
+        });
+      } finally {
+        setBusy(false);
+        // A Turnstile token is single-use: Cloudflare rejects a replay. Without
+        // this reset, a second attempt after any error would always fail the
+        // anti-spam check, and the visitor would be stuck with no way through.
+        const turnstile = (window as unknown as { turnstile?: { reset: () => void } }).turnstile;
+        turnstile?.reset();
+      }
+    });
+  }
+</script>

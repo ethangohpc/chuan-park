@@ -1,0 +1,128 @@
+---
+export const prerender = true;
+
+import LegalLayout from '../layouts/LegalLayout.astro';
+import { agent } from '../data/agent';
+import { site } from '../data/site';
+---
+
+<LegalLayout
+  title="Terms of Use | Independent property marketing website"
+  description="The terms on which this independent property marketing website is made available, including intellectual property, acceptable use and limitation of liability."
+  pathname="/terms"
+  heading="Terms of Use"
+  intro="The terms on which this website is made available to you."
+>
+  <h2>1. Acceptance</h2>
+  <p>
+    By accessing or using this website you agree to these Terms of Use. If you do not agree, please
+    do not use the website.
+  </p>
+
+  <h2>2. Who operates this website</h2>
+  <p>
+    This website is operated by {agent.fullName}, CEA registration {agent.ceaRegistrationNumber}, of
+    {' '}{agent.agencyName}, estate agency licence {agent.agencyLicenceNumber}.
+    {' '}{site.legal.independentDisclosureFull}
+  </p>
+
+  <h2>3. Nature of the information</h2>
+  <p>
+    The content on this website is provided for general information only. It is not an offer, an
+    invitation to treat, a representation or a warranty, and it does not form part of any contract.
+    Project particulars, prices, unit availability, floor areas, plans, specifications and
+    completion dates are indicative and subject to change without notice. The developer’s official
+    documents and the Sale and Purchase Agreement prevail over anything shown here.
+  </p>
+  <p>See the <a href="/disclaimer">Disclaimer</a> for the full position.</p>
+
+  <h2>4. No professional advice</h2>
+  <p>
+    Nothing on this website is financial, investment, tax or legal advice. Property values can fall
+    as well as rise. Before committing to a purchase you should obtain independent professional
+    advice appropriate to your circumstances, and satisfy yourself as to financing, stamp duties and
+    any obligations arising from property you already own.
+  </p>
+
+  <h2>5. Acceptable use</h2>
+  <p>You agree not to:</p>
+  <ul>
+    <li>Use the website for any unlawful purpose or in breach of these terms.</li>
+    <li>
+      Submit false, misleading or third-party contact details, or submit an enquiry on someone
+      else’s behalf without their knowledge.
+    </li>
+    <li>
+      Attempt to gain unauthorised access to the website or any connected system, or interfere with
+      its operation.
+    </li>
+    <li>
+      Use automated means to scrape, harvest or bulk-download content, or to submit enquiries.
+    </li>
+    <li>
+      Reproduce, republish or distribute content from this website for commercial purposes without
+      written permission.
+    </li>
+  </ul>
+
+  <h2>6. Intellectual property</h2>
+  <p>
+    Original text, layout and design on this website belong to the website operator. Project names,
+    logos, renders, plans, brochures and other developer materials belong to their respective owners
+    and are used, where they appear, for identification and marketing of the development. No claim
+    of ownership over third-party materials is made, and no endorsement or affiliation is implied.
+  </p>
+  <p>
+    If you own material that appears here and wish it removed or corrected, contact {agent.email} and
+    it will be dealt with promptly.
+  </p>
+
+  <h2>7. External links</h2>
+  <p>
+    This website may link to third-party sites, including mapping services, regulator registers and
+    messaging services. Those sites are not under the operator’s control, and no responsibility is
+    accepted for their content, availability or privacy practices.
+  </p>
+
+  <h2>8. Availability</h2>
+  <p>
+    The website is provided on an “as is” and “as available” basis. No warranty is given that it
+    will be uninterrupted, error-free, or free of harmful components, or that any defect will be
+    corrected.
+  </p>
+
+  <h2>9. Limitation of liability</h2>
+  <p>
+    To the maximum extent permitted by law, the website operator is not liable for any indirect,
+    incidental, special or consequential loss, or for loss of profit, opportunity or data, arising
+    from your use of, or reliance on, this website. Nothing in these terms excludes or limits
+    liability that cannot lawfully be excluded or limited, including liability for fraud or for
+    death or personal injury caused by negligence.
+  </p>
+
+  <h2>10. Enquiries and communications</h2>
+  <p>
+    Submitting an enquiry does not create any agency relationship, obligation to transact, or
+    reserve any unit. Contact details you provide are handled as described in the
+    {' '}<a href="/privacy">Privacy Policy</a>.
+  </p>
+
+  <h2>11. Changes</h2>
+  <p>
+    These terms may be updated at any time. The version published here at the time you use the
+    website is the version that applies. The date at the top of this page shows when it was last
+    revised.
+  </p>
+
+  <h2>12. Governing law</h2>
+  <p>
+    These terms are governed by the laws of Singapore, and the courts of Singapore have exclusive
+    jurisdiction over any dispute arising from them.
+  </p>
+
+  <h2>13. Contact</h2>
+  <p>
+    {agent.fullName}, CEA registration {agent.ceaRegistrationNumber}, {agent.agencyName}, estate
+    agency licence {agent.agencyLicenceNumber}. Email {agent.email}. Mobile {agent.mobileDisplay}.
+  </p>
+</LegalLayout>
