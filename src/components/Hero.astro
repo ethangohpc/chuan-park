@@ -8,18 +8,7 @@
  * footer, the mobile menu and every legal page.
  *
  * The image is served as <picture> with a separate mobile crop, explicit
- * dimensions and fetchpriority="high" — it is the LCP element, so frame 1 is
- * eager and everything else waits.
- *
- * ANIMATION. `media.heroFrames` adds further stills that cross-fade over
- * frame 1 on a slow loop, under a single shared Ken Burns zoom so the layers
- * stay in register. It is CSS only — no JavaScript, no video, no layout work
- * per frame: `opacity` and `transform` are the only properties that animate,
- * both of which the compositor handles without repainting.
- *
- * It degrades in every direction that matters. No JS: unaffected. Reduced
- * motion: both animations are switched off and frame 1 sits still. Empty
- * `heroFrames`: the markup collapses to the single still image it was before.
+ * dimensions, fetchpriority="high" and no animation — it is the LCP element.
  */
 import { project, verified, isPlaceholder } from '../data/project';
 import { whatsappHref } from '../data/agent';
@@ -73,18 +62,11 @@ const wa = whatsappHref(
 );
 
 const media = project.media;
-
-/*
- * Only the frames that are actually configured. Two extra frames is the sweet
- * spot: enough that the hero moves, few enough that the loop does not read as
- * a slideshow demanding attention while someone is trying to read the price.
- */
-const heroFrames = media.heroFrames ?? [];
 ---
 
 <section class="hero" id="top">
-  <div class={`hero__media${heroFrames.length ? ' is-animated' : ''}`}>
-    <picture class="hero__frame">
+  <div class="hero__media">
+    <picture>
       <source
         media="(max-width: 47.99rem)"
         srcset={media.heroImageMobile}
@@ -100,27 +82,6 @@ const heroFrames = media.heroFrames ?? [];
         decoding="async"
       />
     </picture>
-
-    {
-      heroFrames.map((frame, i) => (
-        <picture class={`hero__frame hero__frame--${i + 2}`} aria-hidden="true">
-          <source
-            media="(max-width: 47.99rem)"
-            srcset={frame.imageMobile}
-            width={frame.mobileWidth}
-            height={frame.mobileHeight}
-          />
-          <img
-            src={frame.image}
-            width={frame.width}
-            height={frame.height}
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-        </picture>
-      ))
-    }
 
     <div class="hero__scrim" aria-hidden="true"></div>
   </div>
@@ -258,99 +219,6 @@ const heroFrames = media.heroFrames ?? [];
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-
-  /*
-   * THE CROSS-FADE
-   * -------------------------------------------------------------------------
-   * Frame 1 is the base layer and never animates its opacity — whatever else
-   * happens, something is always painted behind the headline. Frames 2+ stack
-   * on top and fade IN one at a time, then all fade OUT together at the end of
-   * the cycle, which dissolves the stack back to frame 1 without a hard cut.
-   *
-   * Timings are derived from --hero-cycle so the sequence stays coherent if it
-   * is retuned: with a 24s cycle, each frame holds for 8s and every fade takes
-   * 1.5s (6.25% of the cycle).
-   */
-  .hero__media.is-animated {
-    --hero-cycle: 24s;
-  }
-
-  .hero__media.is-animated .hero__frame--2,
-  .hero__media.is-animated .hero__frame--3 {
-    opacity: 0;
-    will-change: opacity;
-  }
-
-  .hero__media.is-animated .hero__frame--2 {
-    animation: heroFrame2 var(--hero-cycle) linear infinite;
-  }
-
-  .hero__media.is-animated .hero__frame--3 {
-    animation: heroFrame3 var(--hero-cycle) linear infinite;
-  }
-
-  @keyframes heroFrame2 {
-    0%,
-    27.08% {
-      opacity: 0;
-    }
-    33.33%,
-    93.75% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-    }
-  }
-
-  @keyframes heroFrame3 {
-    0%,
-    60.42% {
-      opacity: 0;
-    }
-    66.67%,
-    93.75% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-    }
-  }
-
-  /*
-   * One slow zoom applied to every layer at once, so the frames stay in
-   * register through a cross-fade. `alternate` means it breathes in and out
-   * rather than snapping back to 1 at the loop point.
-   */
-  .hero__media.is-animated img {
-    animation: heroZoom calc(var(--hero-cycle) * 2) ease-in-out infinite alternate;
-    will-change: transform;
-  }
-
-  @keyframes heroZoom {
-    from {
-      transform: scale(1);
-    }
-    to {
-      transform: scale(1.07);
-    }
-  }
-
-  /*
-   * Reduced motion is not a degraded mode here: frame 1 is a finished hero
-   * image on its own, so the honest response is to show it and stop.
-   */
-  @media (prefers-reduced-motion: reduce) {
-    .hero__media.is-animated .hero__frame--2,
-    .hero__media.is-animated .hero__frame--3,
-    .hero__media.is-animated img {
-      animation: none;
-    }
-    .hero__media.is-animated .hero__frame--2,
-    .hero__media.is-animated .hero__frame--3 {
-      opacity: 0;
-    }
   }
 
   .hero__scrim {

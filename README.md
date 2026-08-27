@@ -502,20 +502,18 @@ screen grab and nothing is upscaled — but the source renders top out around
 for. It is sharp at 1x and acceptable at 2x on a phone; replace it from the
 developer's marketing pack before spending real money on traffic.
 
-| Slot                                 | Current                | Source                                                                                                                        |
-| ------------------------------------ | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `hero/01-cabanas-dusk.webp` + mobile | 1554 x 874 / 761 x 951 | sales kit p5 — hero frame 1, the LCP image                                                                                    |
-| `hero/02-lap-pool.webp` + mobile     | 1554 x 874 / 758 x 947 | sales kit p3 — hero frame 2                                                                                                   |
-| `hero/03-towers-dusk.webp` + mobile  | 1554 x 874 / 745 x 931 | sales kit p1 — hero frame 3                                                                                                   |
-| `gallery/*.webp` (10)                | 1054–1600 px wide      | sales kit pp. 2–8, catalogue pp. 2, 10; plus the site plan                                                                    |
-| `gallery/10-vicinity.webp`           | 1585 x 945             | sales kit p66 — a photograph, not a render. **Currently unused**: kept on disk so `media.locationImage` can point back at it. |
-| `map/location-map.webp`              | 1800 x 1455            | catalogue p4 location map                                                                                                     |
-| `site-plan.webp`                     | 1946 x 950             | sales kit p10                                                                                                                 |
-| `floorplans/*.webp` (14)             | 1080 x 1160            | catalogue pp. 13–26, trimmed onto one canvas                                                                                  |
-| `developer/kingsford-logo.webp`      | 1600 x 381             | catalogue p27 rendered at 10x, keyed to transparency                                                                          |
-| `project-logo.png` / `-light.png`    | 600 x 168              | sales-kit slide master, keyed to transparency                                                                                 |
-| `brochure/brochure-cover.webp`       | 900 x 1273             | catalogue page 1, rendered from the PDF                                                                                       |
-| `agent/ethan-goh.webp`               | 400 x 514              | **carried over — too small.** Renders at 338 CSS px, so it is soft on any 2x screen. Supply a 720 x 900 original.             |
+| Slot                              | Current                | Source                                                                                                                        |
+| --------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `hero/towers-dusk.webp` + mobile  | 1554 x 874 / 745 x 931 | sales kit p1 — the hero, still, the LCP image                                                                                 |
+| `gallery/*.webp` (10)             | 1054–1600 px wide      | sales kit pp. 2–8, catalogue pp. 2, 10; plus the site plan                                                                    |
+| `gallery/10-vicinity.webp`        | 1585 x 945             | sales kit p66 — a photograph, not a render. **Currently unused**: kept on disk so `media.locationImage` can point back at it. |
+| `map/location-map.webp`           | 1800 x 1455            | catalogue p4 location map                                                                                                     |
+| `site-plan.webp`                  | 1946 x 950             | sales kit p10                                                                                                                 |
+| `floorplans/*.webp` (14)          | 1080 x 1160            | catalogue pp. 13–26, trimmed onto one canvas                                                                                  |
+| `developer/kingsford-logo.webp`   | 1600 x 381             | catalogue p27 rendered at 10x, keyed to transparency                                                                          |
+| `project-logo.png` / `-light.png` | 600 x 168              | sales-kit slide master, keyed to transparency                                                                                 |
+| `brochure/brochure-cover.webp`    | 900 x 1273             | catalogue page 1, rendered from the PDF                                                                                       |
+| `agent/ethan-goh.webp`            | 400 x 514              | **carried over — too small.** Renders at 338 CSS px, so it is soft on any 2x screen. Supply a 720 x 900 original.             |
 
 The floorplan sheets are trimmed of their white margin and placed on a common
 1080 x 1160 canvas, so the cards line up and the drawing fills the thumbnail
@@ -530,15 +528,20 @@ in `availability`, so adding a layout adds its plan chip automatically.
 
 ### The hero
 
-The hero cross-fades three stills on a 24-second loop under one slow shared
-zoom. It is CSS only — `opacity` and `transform`, nothing else — so it
-composites without repainting and adds no JavaScript. Frame 1 is the LCP
-element and loads eagerly at high priority; the other two are lazy and marked
-decorative, since frame 1 already carries the accessible description.
+A single still, no animation: the establishing view of both towers over the
+lagoon pool at dusk. That is a deliberate choice over the prettier detail shots —
+cabanas, lap pool, clubhouse — which are generic enough to belong to any
+condominium in Singapore. Someone arriving from an ad should be able to see what
+the development is before reading a word; the detail shots do that job in the
+gallery instead.
 
-It switches off entirely under `prefers-reduced-motion`, and emptying
-`media.heroFrames` in `project.ts` reverts the hero to a single still image with
-no other change. Timings live on `--hero-cycle` in `Hero.astro`.
+It is the LCP element: eager, `fetchpriority="high"`, with a separate 4:5 mobile
+crop and explicit dimensions so it costs nothing in layout shift.
+
+An earlier version cross-faded three frames on a slow loop. That has been removed
+outright — component, CSS and the two extra frame pairs — rather than left behind
+switched off. The frames came from sales kit pp. 1 and 3 and are in the git history
+if they are ever wanted again.
 
 When you drop replacements in, update the matching `width`/`height` fields in
 `src/data/project.ts` to the real pixel sizes — those attributes are what hold

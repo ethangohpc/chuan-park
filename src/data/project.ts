@@ -672,47 +672,22 @@ export const project = {
      */
     logoLight: '/images/project-logo-light.png',
 
-    /**
-     * FRAME 1 — the LCP element. Loaded eagerly at high priority and rendered
-     * even with JavaScript and animation off, so it has to stand on its own.
+    /** The LCP element: loaded eagerly at high priority, and never animated. */
+    /*
+     * The establishing view, deliberately: both towers, the lagoon pool and the
+     * landscaped deck in one frame, so a visitor arriving from an ad can see
+     * what the development IS before reading a word. The detail shots — cabanas,
+     * lap pool, clubhouse — are lovely but generic, and could be any condominium
+     * in Singapore. They sit in the gallery, which is where they belong.
      */
-    heroImage: '/images/hero/01-cabanas-dusk.webp',
-    heroImageMobile: '/images/hero/01-cabanas-dusk-mobile.webp',
+    heroImage: '/images/hero/towers-dusk.webp',
+    heroImageMobile: '/images/hero/towers-dusk-mobile.webp',
     heroImageWidth: 1554,
     heroImageHeight: 874,
-    heroImageMobileWidth: 761,
-    heroImageMobileHeight: 951,
+    heroImageMobileWidth: 745,
+    heroImageMobileHeight: 931,
     heroImageAlt:
-      'Artist’s impression of Chuan Park at dusk: tall palms lit from below along the pool deck, with daybeds set at the water’s edge and the residential blocks behind',
-
-    /**
-     * FRAMES 2+ — cross-faded over frame 1 on a slow loop, under a shared Ken
-     * Burns zoom. Lazy-loaded and marked decorative: frame 1 already carries
-     * the accessible description of the hero, and announcing three near-
-     * identical descriptions of the same development helps nobody.
-     *
-     * The whole sequence is disabled under `prefers-reduced-motion`, where the
-     * page shows frame 1 and nothing moves. Leave this array empty and the hero
-     * falls back to exactly the single still image it was before.
-     */
-    heroFrames: [
-      {
-        image: '/images/hero/02-lap-pool.webp',
-        imageMobile: '/images/hero/02-lap-pool-mobile.webp',
-        width: 1554,
-        height: 874,
-        mobileWidth: 758,
-        mobileHeight: 947,
-      },
-      {
-        image: '/images/hero/03-towers-dusk.webp',
-        imageMobile: '/images/hero/03-towers-dusk-mobile.webp',
-        width: 1554,
-        height: 874,
-        mobileWidth: 745,
-        mobileHeight: 931,
-      },
-    ],
+      'Artist’s impression of Chuan Park at dusk: the two residential towers lit from within, rising above the free-form lagoon pool and its landscaped deck, against a sunset sky',
 
     /**
      * Optional figure beside the Location copy. Empty on purpose — the section
