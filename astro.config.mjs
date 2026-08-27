@@ -6,11 +6,17 @@ import cloudflare from '@astrojs/cloudflare';
 /**
  * SITE URL
  * ---------------------------------------------------------------------------
- * Update this to the production domain BEFORE deploying. It is used for the
- * canonical URL, Open Graph tags, sitemap and structured data.
- * It should match the display domain used in your Google Ads account.
+ * The production domain. Used for the canonical URL, Open Graph tags, the
+ * sitemap and structured data, and it must match the display domain in your
+ * Google Ads account.
+ *
+ * It is the DEFAULT rather than an environment variable on purpose: Cloudflare
+ * Workers Builds would need PUBLIC_SITE_URL added as a build variable in the
+ * dashboard, and a domain that only lives in a dashboard is a domain that
+ * silently reverts to example.com the day someone rebuilds elsewhere. Set
+ * PUBLIC_SITE_URL to override for a staging deploy.
  */
-const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://example.com';
+const SITE_URL = process.env.PUBLIC_SITE_URL || 'https://chuanpark.rsvp-home.com';
 
 export default defineConfig({
   site: SITE_URL,

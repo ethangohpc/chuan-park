@@ -474,7 +474,7 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:8787/api/lead
 ### After the first deploy
 
 1. Add the custom domain in the dashboard and let Cloudflare issue the certificate.
-2. Set `PUBLIC_SITE_URL` and update the `Sitemap:` line in `public/robots.txt`. Until you do, canonical and Open Graph tags point at `example.com`.
+2. The production domain is `https://chuanpark.rsvp-home.com`, set as the default `SITE_URL` in `astro.config.mjs`, mirrored in `src/data/site.ts` and used in the `Sitemap:` line of `public/robots.txt`. Change all three together. `PUBLIC_SITE_URL` overrides it for a staging deploy.
 3. Redeploy so the canonical URL, Open Graph tags and sitemap use the real domain.
 
 ---

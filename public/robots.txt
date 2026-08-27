@@ -23,5 +23,4 @@ Allow: /
 Disallow: /api/
 Disallow: /thank-you
 
-# Update the host below to the production domain before launch.
-Sitemap: https://example.com/sitemap-index.xml
+Sitemap: https://chuanpark.rsvp-home.com/sitemap-index.xml

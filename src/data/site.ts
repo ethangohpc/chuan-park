@@ -81,7 +81,8 @@ export interface LegalConfig {
 }
 
 export const site: SiteConfig = {
-  url: import.meta.env.PUBLIC_SITE_URL || 'https://example.com',
+  /* Must match SITE_URL in astro.config.mjs — see the note there. */
+  url: import.meta.env.PUBLIC_SITE_URL || 'https://chuanpark.rsvp-home.com',
 
   // Switch between 'urban-editorial' | 'garden-contemporary' | 'coastal-minimal'
   theme: 'garden-contemporary',
