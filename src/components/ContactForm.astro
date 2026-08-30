@@ -299,6 +299,22 @@ const consentText = `By submitting this enquiry, I confirm that I have read the 
 }
 
 <style>
+  /*
+   * Turnstile renders a fixed 300px-wide iframe that cannot wrap or shrink.
+   * Left alone it sets the min-content width of the whole contact column, which
+   * on a 320px viewport pushed the column to 374px and made Chrome zoom the
+   * entire page out — every section, not just this one.
+   *
+   * Making the widget its own scroll container stops that intrinsic width
+   * propagating to its ancestors. On any real phone (375px and up) it fits with
+   * room to spare and no scrollbar appears; below that the widget nudges
+   * sideways instead of dragging the layout with it.
+   */
+  .lead-form__turnstile {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
   .contact__layout {
     display: grid;
     gap: var(--sp-7);

@@ -232,6 +232,13 @@ export const POST: APIRoute = async ({ request }) => {
   // lost to an anti-spam heuristic costs far more than a spam message.
   const minFill = Number(env.LEAD_MIN_FILL_SECONDS ?? '1.5') * 1000;
   const renderedAt = Number(str(form, 'renderedAt'));
+  /* How long the form was open, when the browser told us. Reported on the
+     notification so a suspiciously fast lead is visible rather than merely
+     rejected — null when the field never arrived, e.g. scripting disabled. */
+  const fillSeconds =
+    Number.isFinite(renderedAt) && renderedAt > 0
+      ? Math.max(0, Math.round((Date.now() - renderedAt) / 1000))
+      : null;
   if (Number.isFinite(renderedAt) && renderedAt > 0 && Date.now() - renderedAt < minFill) {
     const message =
       'That was submitted unusually quickly, which we screen for automatically. Please press submit once more and it will go through.';
@@ -249,11 +256,15 @@ export const POST: APIRoute = async ({ request }) => {
   // needs JavaScript, so once this is enabled a no-JS submission has no token
   // and is refused. Everything else on this page still works without scripting.
   const turnstileSecret = env.TURNSTILE_SECRET_KEY;
+  /* null means Turnstile is not configured at all, which the notification says
+     plainly rather than implying a check that never ran. */
+  let turnstilePassed: boolean | null = null;
   if (turnstileSecret) {
     const token = str(form, 'cf-turnstile-response');
     const passed = token
       ? await verifyTurnstile(token, turnstileSecret, clientKey(request))
       : false;
+    turnstilePassed = passed;
     if (!passed) {
       const message =
         'The anti-spam check did not complete. Please reload the page and try again, or WhatsApp instead.';
@@ -319,6 +330,10 @@ export const POST: APIRoute = async ({ request }) => {
     landingPage: str(form, 'landingPage') || request.headers.get('referer') || '',
     referrer: str(form, 'referrer') || request.headers.get('referer') || '',
     userAgent: request.headers.get('user-agent') || '',
+
+    /* Only reachable once every check above has passed, so these record what
+       happened rather than asserting an outcome. */
+    botCheck: { turnstilePassed, fillSeconds },
   };
 
   // ---- 6. Deliver ---------------------------------------------------------

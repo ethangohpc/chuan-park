@@ -287,21 +287,40 @@ TELEGRAM_CHAT_ID="123456789"
 Redeploy. Each lead arrives as:
 
 ```
-New enquiry — Chuan Park
+🏠 New enquiry — Chuan Park · 24086050550
+👤 Name: Tan Wei Ming
+📱 WhatsApp: +65 9123 4567          ← tap to call
+🏷️ Unit type: 3 Bedroom, 4 Bedroom
+✅ Interested in: Arrange Showflat Viewing, Request for Brochure & Floorplans
+💬 Message: Keen on a high floor, budget 3.2m.
+📊 Source: google / cpc / 24086050550
+🔗 gclid: EAIaIQobChMIoPLUwrPGlgMVIIRmAh01pgFtEAAYASAAEgK7m_D_BwE
+🕒 2026-08-29T17:53:46.414Z
+🛡️ Bot check: Turnstile passed · honeypot + timing OK (42s)
+```
 
-Tan Wei Ming
-📱 9123 4567          ← tap to call
-✉️ Email: tan@example.com
+One labelled fact per line, in the order they get read on a phone: who, how to
+reach them, what they want, which ad earned it, then the audit trail. An empty
+value renders as an em dash rather than vanishing, so the shape is constant and
+a missing field is visibly missing.
 
-Wants: Book a showflat appointment
-Unit type: 3 Bedroom (Luxury)
-Prefers: WhatsApp
-Viewing date: 2026-08-20
+The heading leads with the project because several of these sites deliver into
+one chat, and the first thing to establish is which one a lead came from. The
+campaign follows it when there is one.
 
-💬 Keen on a high floor, budget 2.5m.
+The click-id line adapts: `gclid`, `gbraid` or `wbraid`, whichever Google sent,
+and the line is omitted entirely when none arrived.
 
-Source: google / cpc / chuan-park-brand
-2026-08-18T10:00:00Z
+The bot-check line reports what actually happened for that submission rather
+than asserting a fixed string — `Turnstile off` when it is not configured, and
+the real fill time in seconds. A lead that failed any check never reaches
+delivery, so a hardcoded "passed" would have been decoration.
+
+The body is built by `buildTelegramMessage()` in `src/utils/leadAdapter.ts`,
+exported and pure so the format can be checked without a bot token:
+
+```bash
+node --experimental-strip-types -e "import('./src/utils/leadAdapter.ts').then(m=>console.log(m.buildTelegramMessage(LEAD)))"
 ```
 
 The phone number is a `tel:` link, so a lead is one tap from a call. Campaign source comes from the UTM parameters, falling back to "Google Ads" when only a click id is present, then to the referrer, then to "direct".

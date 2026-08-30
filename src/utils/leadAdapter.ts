@@ -53,6 +53,18 @@ export interface LeadRecord {
   landingPage: string;
   referrer: string;
   userAgent: string;
+
+  /**
+   * What the anti-spam layer actually did for THIS submission, assembled by
+   * /api/lead. Reported rather than asserted: a hardcoded "passed" would be
+   * decoration, since a lead that failed a check never reaches delivery.
+   */
+  botCheck: {
+    /** null when Turnstile is not configured, so the line can say so. */
+    turnstilePassed: boolean | null;
+    /** Seconds between the form rendering and the submission, when known. */
+    fillSeconds: number | null;
+  };
 }
 
 export type DeliveryMode = 'console' | 'webhook' | 'email' | 'telegram';
@@ -147,6 +159,76 @@ function escapeTelegramHtml(value: string): string {
  * from a call, and the whole message is capped at Telegram's 4096-character
  * limit — a long enquiry message is truncated rather than silently rejected.
  */
+/**
+ * The Telegram message body.
+ *
+ * Exported and pure so the format can be exercised without a bot token — see
+ * the note in the README on checking it after an edit.
+ *
+ * Every line is one labelled fact, in the order they get read on a phone:
+ * who, how to reach them, what they want, then the attribution that says
+ * which ad earned the lead, then the audit trail. Empty values render as an
+ * em dash rather than vanishing, so the shape of the message is constant and
+ * a missing field is visibly missing rather than silently absent.
+ */
+export function buildTelegramMessage(lead: LeadRecord): string {
+  const e = escapeTelegramHtml;
+  const dash = '—';
+  const val = (v: string) => (v ? e(v) : dash);
+
+  /* Which ad earned this. Falls back through the click ids and the referrer so
+     the line is never simply blank. */
+  const source =
+    [lead.utmSource, lead.utmMedium, lead.utmCampaign].filter(Boolean).join(' / ') ||
+    (lead.gclid || lead.gbraid || lead.wbraid ? 'Google Ads' : '') ||
+    (lead.referrer ? `referrer ${lead.referrer}` : 'direct');
+
+  /* Google hands over whichever click id applies to the campaign type, so the
+     label follows the one that actually arrived. */
+  const clickId = lead.gclid
+    ? { label: 'gclid', value: lead.gclid }
+    : lead.gbraid
+      ? { label: 'gbraid', value: lead.gbraid }
+      : lead.wbraid
+        ? { label: 'wbraid', value: lead.wbraid }
+        : null;
+
+  const turnstile =
+    lead.botCheck.turnstilePassed === null
+      ? 'Turnstile off'
+      : lead.botCheck.turnstilePassed
+        ? 'Turnstile passed'
+        : 'Turnstile not verified';
+
+  const timing =
+    lead.botCheck.fillSeconds === null
+      ? 'honeypot OK · timing not checked'
+      : `honeypot + timing OK (${lead.botCheck.fillSeconds}s)`;
+
+  /* The project name leads, because several of these sites deliver into one
+     chat and the first thing to establish is which one this came from. The
+     campaign follows it when there is one. */
+  const heading = [lead.project, lead.utmCampaign].filter(Boolean).join(' · ');
+
+  const tel = lead.phone.replace(/[^\d+]/g, '');
+
+  const lines = [
+    `🏠 <b>New enquiry — ${e(heading)}</b>`,
+    `👤 Name: <b>${val(lead.name)}</b>`,
+    `📱 WhatsApp: <a href="tel:${e(tel)}">${val(lead.phone)}</a>`,
+    `🏷️ Unit type: ${val(lead.unitTypes.join(', '))}`,
+    `✅ Interested in: ${val(lead.interests.join(', '))}`,
+    `💬 Message: ${val(lead.message)}`,
+    `📊 Source: ${e(source)}`,
+    clickId ? `🔗 ${clickId.label}: ${e(clickId.value)}` : null,
+    `🕒 ${e(lead.submittedAt)}`,
+    `🛡️ Bot check: ${e(turnstile)} · ${e(timing)}`,
+  ].filter((line): line is string => line !== null);
+
+  const text = lines.join('\n');
+  return text.length > 4096 ? `${text.slice(0, 4000)}\n\n<i>[truncated]</i>` : text;
+}
+
 async function deliverViaTelegram(
   lead: LeadRecord,
   env: Record<string, string | undefined>
@@ -170,29 +252,7 @@ async function deliverViaTelegram(
     };
   }
 
-  const e = escapeTelegramHtml;
-  const row = (label: string, value: string) => (value ? `${label}: ${e(value)}` : null);
-
-  const source =
-    [lead.utmSource, lead.utmMedium, lead.utmCampaign].filter(Boolean).join(' / ') ||
-    (lead.gclid || lead.gbraid || lead.wbraid ? 'Google Ads' : '') ||
-    (lead.referrer ? `referrer ${lead.referrer}` : 'direct');
-
-  const lines = [
-    `<b>New enquiry — ${e(lead.project)}</b>`,
-    '',
-    `<b>${e(lead.name)}</b>`,
-    `📱 <a href="tel:${e(lead.phone.replace(/[^\d+]/g, ''))}">${e(lead.phone)}</a>`,
-    '',
-    row('Wants', lead.interests.join(', ')),
-    row('Unit type', lead.unitTypes.join(', ')),
-    lead.message ? `\n💬 ${e(lead.message)}` : null,
-    '',
-    `<i>Source: ${e(source)}</i>`,
-    `<i>${e(lead.submittedAt)}</i>`,
-  ].filter((line): line is string => line !== null);
-
-  let text = lines.join('\n');
+  let text = buildTelegramMessage(lead);
   if (text.length > 4096) text = `${text.slice(0, 4000)}\n\n<i>[truncated]</i>`;
 
   const controller = new AbortController();
