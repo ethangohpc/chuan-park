@@ -15,8 +15,9 @@
  *   email    Sends a transactional email. The example below uses Resend's
  *            REST API; swap the fetch call for your provider.
  *   telegram Sends a formatted message to a Telegram chat via a bot. Needs
- *            TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID. Fastest way to get a
- *            lead onto your phone with no third-party service in between.
+ *            LEAD_TELEGRAM_BOT_TOKEN and LEAD_TELEGRAM_CHAT_ID (the unprefixed
+ *            TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID are also accepted). Fastest
+ *            way to get a lead onto your phone with no third-party service.
  */
 
 export interface LeadRecord {
@@ -150,14 +151,22 @@ async function deliverViaTelegram(
   lead: LeadRecord,
   env: Record<string, string | undefined>
 ): Promise<DeliveryResult> {
-  const token = env.TELEGRAM_BOT_TOKEN;
-  const chatId = env.TELEGRAM_CHAT_ID;
+  /*
+   * Both spellings are accepted. LEAD_-prefixed is preferred because it matches
+   * every other setting this adapter reads — LEAD_DELIVERY_MODE, LEAD_WEBHOOK_URL,
+   * LEAD_EMAIL_TO — and groups the lead plumbing together in the Cloudflare
+   * secrets list. The bare names are the ones the README has always documented,
+   * so they keep working and older deployments are unaffected.
+   */
+  const token = env.LEAD_TELEGRAM_BOT_TOKEN ?? env.TELEGRAM_BOT_TOKEN;
+  const chatId = env.LEAD_TELEGRAM_CHAT_ID ?? env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) {
     return {
       ok: false,
       simulated: false,
-      error: 'TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must both be set.',
+      error:
+        'Telegram delivery needs a bot token and a chat id. Set LEAD_TELEGRAM_BOT_TOKEN and LEAD_TELEGRAM_CHAT_ID (or the unprefixed TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) as Worker secrets.',
     };
   }
 
