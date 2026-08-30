@@ -26,6 +26,22 @@ export interface SiteConfig {
   region: string;
   currency: string;
   navigation: NavItem[];
+  /**
+   * Cloudflare Turnstile site key. PUBLIC by design — it is rendered into the
+   * HTML as a data-sitekey attribute, so committing it leaks nothing.
+   *
+   * It lives here rather than in an environment variable because Astro inlines
+   * PUBLIC_* at BUILD time: as a Cloudflare build variable it would have to be
+   * present on whichever machine runs the build, and would silently vanish —
+   * taking the widget with it — the first time anyone built elsewhere.
+   * PUBLIC_TURNSTILE_SITE_KEY still overrides it.
+   *
+   * MUST be paired with the TURNSTILE_SECRET_KEY Worker secret. A widget with
+   * no server check is decoration; a server check with no widget refuses every
+   * submission. Empty here means Turnstile is off entirely, which is a valid
+   * state — the honeypot, fill-time check and rate limit still apply.
+   */
+  turnstileSiteKey: string;
   tracking: TrackingConfig;
   legal: LegalConfig;
 }
@@ -94,6 +110,9 @@ export const site: SiteConfig = {
   locale: 'en-SG',
   region: 'SG',
   currency: 'SGD',
+
+  /* The "ETHANLEADS" widget, scoped to rsvp-home.com and its subdomains. */
+  turnstileSiteKey: '0x4AAAAAAET3V1_fQpuL_01G',
 
   navigation: [
     { label: 'About', href: '#about', id: 'about' },

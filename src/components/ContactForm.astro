@@ -29,6 +29,7 @@ import { project } from '../data/project';
 import { unitGroups } from '../utils/unitGroups';
 import { agent } from '../data/agent';
 import { INTERESTS } from '../utils/validation';
+import { site } from '../data/site';
 
 /*
  * The adviser's identification sits in this section rather than in a section of
@@ -63,7 +64,7 @@ const isSimulated = !['webhook', 'email', 'telegram'].includes(deliveryMode);
  * widget with no server check is decoration, and a server check with no widget
  * refuses every submission.
  */
-const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || site.turnstileSiteKey || '';
 
 /*
  * One consent, and it covers only this enquiry. The optional marketing opt-in

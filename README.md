@@ -325,26 +325,41 @@ Click IDs persist in `sessionStorage`, so attribution survives an internal navig
 
 **The rate limiter is in-memory and therefore best-effort.** Worker isolates do not share memory. For real protection add one of: a Cloudflare WAF rate-limiting rule on `/api/lead`; a shared counter in Workers KV or Durable Objects (replace `hit()` in `src/utils/rateLimit.ts`); or Turnstile, below.
 
-#### Turning on Cloudflare Turnstile
+#### Cloudflare Turnstile — already on
 
-Turnstile is a CAPTCHA alternative that usually shows nothing more than a "Success!" tick. It is off until both keys are set, and **the site does not need to be hosted on Cloudflare** — it is just an API.
+Turnstile is enabled on this site. Two halves, and they must stay in step:
 
-1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com) → **Turnstile** → **Add site**.
-2. Enter your domain. Add `localhost` too if you want it working in development.
-3. Widget mode **Managed** is the sensible default.
-4. Copy the two keys it gives you:
-   - **Site key** → `PUBLIC_TURNSTILE_SITE_KEY` (public; it ships to the browser)
-   - **Secret key** → `TURNSTILE_SECRET_KEY` (server-side only; never commit it)
-5. Put `PUBLIC_TURNSTILE_SITE_KEY` in `wrangler.jsonc` under `vars`, and `TURNSTILE_SECRET_KEY` in the Cloudflare dashboard as a **secret**. Locally, both go in `.dev.vars`.
-6. Redeploy. Astro inlines the site key at build time, so a rebuild is required — setting the variable alone does nothing.
+| Half              | Where it lives                                | Value                                              |
+| ----------------- | --------------------------------------------- | -------------------------------------------------- |
+| Site key (public) | `site.turnstileSiteKey` in `src/data/site.ts` | the `ETHANLEADS` widget, scoped to `rsvp-home.com` |
+| Secret            | Worker secret `TURNSTILE_SECRET_KEY`          | set via `npx wrangler secret put`                  |
 
-Set **both or neither**. The site key renders the widget; the secret makes `/api/lead` verify the token with Cloudflare. A widget with no secret is decoration, and a secret with no widget refuses every submission.
+The site key is committed on purpose. Astro inlines `PUBLIC_*` at BUILD time, so
+as a Cloudflare build variable it would have to exist on whichever machine runs
+the build, and would silently vanish — taking the widget with it — the first
+time anyone built elsewhere. It is public by design: it ships in the HTML as a
+`data-sitekey` attribute. `PUBLIC_TURNSTILE_SITE_KEY` still overrides it.
 
-To test without real traffic, Cloudflare publishes dummy keys — site key `1x00000000000000000000AA` with secret `1x0000000000000000000000000000000AA` always passes; `2x00000000000000000000AB` with `2x0000000000000000000000000000000AA` always fails.
+The widget is scoped to `rsvp-home.com`, which covers every subdomain — the same
+widget serves `granddunman.rsvp-home.com`.
 
-**The trade-off.** Turnstile needs JavaScript. Everything else on this page works without it — including this form, which falls back to a plain POST — but once Turnstile is enabled a no-JS submission arrives with no token and is refused. The honeypot, fill-time check and rate limit keep working either way, so leaving Turnstile off is a defensible choice until you actually see spam.
+**Never set one half without the other.** A widget with no server check is
+decoration; a server check with no widget refuses every submission on the site.
+To turn Turnstile off, clear `turnstileSiteKey` AND delete the secret:
 
-Verification **fails closed**: if Cloudflare cannot be reached, the submission is rejected rather than waved through. And because a token is single-use, the client requests a fresh one after any failed submit — otherwise a visitor who mistyped their phone number would be locked out of their second attempt.
+```bash
+npx wrangler secret delete TURNSTILE_SECRET_KEY
+```
+
+**The no-JS fallback is now gone.** Turnstile needs JavaScript, so a submission
+with scripting disabled arrives without a token and is refused. Everything else
+on the page still works without JavaScript. The honeypot, fill-time check and
+rate limit continue to apply either way.
+
+**Automated tests cannot submit this form.** Turnstile detects headless and
+instrumented browsers and declines to issue a token, so Playwright submissions
+fail with "The anti-spam check did not complete". That is the product working,
+not a bug. Verify the form by hand in a normal browser.
 
 ### Consent
 
