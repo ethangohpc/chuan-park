@@ -131,7 +131,20 @@ export const site: SiteConfig = {
     // public. Prefer setting them here only after the containers exist.
     googleTagManagerId: 'GTM-XXXXXXX',
     googleAnalyticsId: 'G-XXXXXXXXXX',
-    googleAdsConversionId: 'AW-XXXXXXXXX',
+    /* Live Google Ads account. Loaded via gtag directly, since no GTM
+       container is configured — see Analytics.astro. */
+    googleAdsConversionId: 'AW-18418164630',
+    /*
+     * The conversion action's label, the part after the slash in
+     * "AW-18418164630/AbCdEfGh1234". Create the conversion action in Google Ads
+     * (Goals → Conversions → New, "Website", set up manually with a tag), and
+     * paste its label here.
+     *
+     * WITHOUT IT NO CONVERSION IS RECORDED. The tag loads and Ads sees traffic,
+     * but `generate_lead` never becomes a countable conversion, so smart
+     * bidding has nothing to optimise towards. The wiring is already in
+     * Analytics.astro and starts working the moment this is filled in.
+     */
     googleAdsConversionLabel: '[CONVERSION LABEL]',
     metaPixelId: '[META PIXEL ID]',
     consentMode: {

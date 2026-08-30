@@ -35,6 +35,20 @@ const hasGa = !isPlaceholder(gaId) && /^G-[A-Z0-9]{6,}$/.test(gaId) && gaId !== 
 const hasAds = !isPlaceholder(adsId) && /^AW-\d{6,}$/.test(adsId);
 const hasPixel = !isPlaceholder(pixelId) && /^\d{6,}$/.test(pixelId);
 
+/*
+ * Google Ads conversion, fired directly from gtag.
+ *
+ * With a GTM container the conversion tag is built in GTM off the
+ * `generate_lead` custom event, and this stays out of the way. Without one —
+ * which is this site — a dataLayer push reaches nothing, so the conversion has
+ * to be sent from the page. Needs the label as well as the account id: an
+ * account id alone identifies the advertiser, not the action being counted.
+ */
+const adsLabel = tracking.googleAdsConversionLabel;
+const hasAdsConversion =
+  hasAds && !hasGtm && !isPlaceholder(adsLabel) && /^[A-Za-z0-9_-]{5,}$/.test(adsLabel);
+const adsSendTo = `${adsId}/${adsLabel}`;
+
 // gtag.js is loaded directly only when GTM is absent — otherwise GTM owns it.
 const directGtagId = !hasGtm && (hasGa || hasAds) ? (hasGa ? gaId : adsId) : null;
 
@@ -86,6 +100,41 @@ const gtagScript = `
 
 const pixelHandoffScript = `window.__metaPixelId = ${JSON.stringify(pixelId)};`;
 
+/*
+ * Listens for the one event that means a lead was actually accepted by the
+ * server, and reports it to Google Ads once.
+ *
+ * `generate_lead` is pushed from two places — the JS submit handler and the
+ * thank-you page, for the no-JS path — and a visitor who reloads /thank-you
+ * would push it again. The guard keeps a single conversion per page view, and
+ * the thank-you page already sets its own flag so a reload after the JS path
+ * does not double count.
+ *
+ * Consent Mode gates delivery: while ad_storage is denied this sends a
+ * cookieless ping rather than nothing, which is the behaviour Google expects
+ * and is why the consent defaults are set before any tag loads.
+ */
+const adsConversionScript = `
+  (function () {
+    var sent = false;
+    window.dataLayer = window.dataLayer || [];
+    function report(e) {
+      if (sent || !e || e.event !== 'generate_lead') return;
+      sent = true;
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'conversion', { send_to: ${JSON.stringify(adsSendTo)} });
+      }
+    }
+    window.dataLayer.forEach(report);
+    var push = window.dataLayer.push;
+    window.dataLayer.push = function () {
+      var r = push.apply(this, arguments);
+      for (var i = 0; i < arguments.length; i++) report(arguments[i]);
+      return r;
+    };
+  })();
+`;
+
 const noTagComment = `
   No analytics or advertising tags are installed on this build.
   Add real IDs in src/data/site.ts (the "tracking" block) once the containers exist:
@@ -111,6 +160,8 @@ const noTagComment = `
     </Fragment>
   )
 }
+
+{hasAdsConversion && <script is:inline set:html={adsConversionScript} />}
 
 {hasPixel && <script is:inline set:html={pixelHandoffScript} />}
 
