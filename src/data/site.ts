@@ -135,17 +135,17 @@ export const site: SiteConfig = {
        container is configured — see Analytics.astro. */
     googleAdsConversionId: 'AW-18418164630',
     /*
-     * The conversion action's label, the part after the slash in
-     * "AW-18418164630/AbCdEfGh1234". Create the conversion action in Google Ads
-     * (Goals → Conversions → New, "Website", set up manually with a tag), and
-     * paste its label here.
+     * The "Submit lead form" conversion action, sent as
+     * AW-18418164630/iTO9CKaEwuocEJbHu85E from Analytics.astro on the
+     * generate_lead event — see the note there on why it goes directly rather
+     * than through GTM.
      *
-     * WITHOUT IT NO CONVERSION IS RECORDED. The tag loads and Ads sees traffic,
-     * but `generate_lead` never becomes a countable conversion, so smart
-     * bidding has nothing to optimise towards. The wiring is already in
-     * Analytics.astro and starts working the moment this is filled in.
+     * Both halves are required. Without the label the tag loads and Ads sees
+     * traffic, but nothing is ever counted, so smart bidding has nothing to
+     * optimise towards. That is exactly what "This conversion action wasn't
+     * detected" in Ads diagnostics means.
      */
-    googleAdsConversionLabel: '[CONVERSION LABEL]',
+    googleAdsConversionLabel: 'iTO9CKaEwuocEJbHu85E',
     metaPixelId: '[META PIXEL ID]',
     consentMode: {
       enabled: true,

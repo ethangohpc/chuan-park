@@ -166,9 +166,17 @@ const showflat = verified(project.showflatAddress);
 
 <script>
   /*
-   * Fires the lead conversion for the no-JavaScript submission path, where the
-   * server redirected here. The JS path already fired it on the form response,
-   * so a session flag prevents double counting.
+   * The single place a lead conversion is counted, for BOTH submission paths.
+   *
+   * The form used to fire it on the fetch response and set a flag so this page
+   * would skip — but that raced the redirect on the next line, and a dropped
+   * beacon is a lead Ads never hears about. Counting here means a fully loaded
+   * document, no race, and one code path for the JS and no-JS submissions.
+   *
+   * The session flag now guards against a RELOAD of this page rather than
+   * against the form: reaching /thank-you twice in a session is one lead, not
+   * two. If sessionStorage is unavailable the event still fires — under-
+   * counting a real lead is worse than the rare duplicate.
    */
   const w = window as unknown as { trackEvent?: (e: string, p?: object) => void };
   try {

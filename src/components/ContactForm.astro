@@ -866,14 +866,18 @@ const consentText = `By submitting this enquiry, I confirm that I have read the 
         } | null;
 
         if (response.ok && data?.ok) {
-          // Only now — after a confirmed success — do we count the lead.
-          track?.('generate_lead', { location: 'contact' });
-          // Tells /thank-you the conversion has already been counted.
-          try {
-            sessionStorage.setItem('lead_counted', '1');
-          } catch {
-            /* storage blocked — /thank-you will count it instead */
-          }
+          /*
+           * The conversion is counted on /thank-you, not here.
+           *
+           * Firing it at this point means racing the redirect that happens on
+           * the very next line: the Ads beacon has microseconds to leave the
+           * page, and a dropped beacon is a lead that Ads never learns about.
+           * The thank-you page fires it on a fully loaded document instead,
+           * which is both reliable and the arrangement Google documents.
+           *
+           * It also means one code path rather than two — the no-JS submission
+           * lands on the same page and is counted the same way.
+           */
           window.location.href = data.redirect || '/thank-you';
           return;
         }
