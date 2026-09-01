@@ -64,7 +64,29 @@ const isSimulated = !['webhook', 'email', 'telegram'].includes(deliveryMode);
  * widget with no server check is decoration, and a server check with no widget
  * refuses every submission.
  */
-const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || site.turnstileSiteKey || '';
+/*
+ * site.ts wins. This used to be the other way round, and it cost hours.
+ *
+ * A stale PUBLIC_TURNSTILE_SITE_KEY in the Cloudflare build settings held a
+ * value one character short of the real key. Every Cloudflare git build
+ * therefore shipped an invalid sitekey — Turnstile declined to render, and
+ * every enquiry failed the anti-spam check — while local builds, which have no
+ * such variable, were perfectly fine. The output differed by a single byte,
+ * which made it look like a corrupted build rather than a config override
+ * doing exactly what it was told.
+ *
+ * The environment variable is now a FALLBACK, used only when site.ts is empty,
+ * and a mismatch is shouted about at build time instead of silently winning.
+ */
+const envSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || '';
+const turnstileSiteKey = site.turnstileSiteKey || envSiteKey;
+
+if (envSiteKey && site.turnstileSiteKey && envSiteKey !== site.turnstileSiteKey) {
+  console.warn(
+    `[turnstile] PUBLIC_TURNSTILE_SITE_KEY (${envSiteKey}) disagrees with site.turnstileSiteKey ` +
+      `(${site.turnstileSiteKey}). Using site.ts. Delete the environment variable, or fix it.`
+  );
+}
 
 /*
  * One consent, and it covers only this enquiry. The optional marketing opt-in
