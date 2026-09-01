@@ -72,6 +72,27 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || site.turns
  * a lead from this form is never a basis for sending marketing. Restoring it
  * means restoring the checkbox here AND the wording in the Privacy Policy.
  */
+/*
+ * Split deliberately. The whole point is that no complete sitekey literal sits
+ * in the markup for a build step to mangle; it is reassembled in the browser.
+ */
+const keyParts = JSON.stringify(turnstileSiteKey.split('_'));
+
+const turnstileBootstrap = `
+  window.cpTurnstileInit = function () {
+    var host = document.querySelector('[data-turnstile-host]');
+    if (!host || !window.turnstile) return;
+    window.turnstile.render(host, {
+      sitekey: ${keyParts}.join('_'),
+      theme: 'light',
+      action: 'lead-form',
+      'refresh-expired': 'auto',
+      retry: 'auto',
+      'retry-interval': 2000
+    });
+  };
+`;
+
 const consentText = `By submitting this enquiry, I confirm that I have read the Privacy Policy and consent to Ethan Goh of ${agent.agencyName} contacting me regarding this property enquiry by WhatsApp, phone or email.`;
 ---
 
@@ -261,23 +282,20 @@ const consentText = `By submitting this enquiry, I confirm that I have read the 
 
           {
             /*
-             * A Turnstile token dies after 300 seconds. This is a long page — a
-             * visitor can read the price table, the floorplans and the FAQ
-             * before reaching the form — so without `data-refresh-expired` the
-             * token is routinely stale by the time they submit and the server
-             * rejects a perfectly genuine enquiry.
+             * Rendered explicitly from JavaScript, NOT via the usual
+             * data-sitekey attribute.
+             *
+             * The Cloudflare git build was reproducibly emitting this page with
+             * one character missing from the sitekey attribute — byte-identical
+             * output to a local build except a deleted "G" — which made
+             * Turnstile refuse to render and every enquiry fail the anti-spam
+             * check. With no attribute to corrupt, and the key assembled at
+             * runtime from parts, that failure mode is gone.
+             *
+             * A token also dies after 300 seconds, and this is a long page, so
+             * the widget is configured to re-solve an expired one in place.
              */
-            turnstileSiteKey && (
-              <div
-                class="cf-turnstile lead-form__turnstile"
-                data-sitekey={turnstileSiteKey}
-                data-theme="light"
-                data-action="lead-form"
-                data-refresh-expired="auto"
-                data-retry="auto"
-                data-retry-interval="2000"
-              />
-            )
+            turnstileSiteKey && <div class="lead-form__turnstile" data-turnstile-host />
           }
 
           <button
@@ -301,10 +319,18 @@ const consentText = `By submitting this enquiry, I confirm that I have read the 
 </section>
 
 {
-  /* Loaded only when Turnstile is configured. It is a security control rather
-    than analytics, so it is not gated behind the consent notice. */
+  /* A security control rather than analytics, so it is not gated behind the
+     consent notice. `render=explicit` hands control to the bootstrap below. */
   turnstileSiteKey && (
-    <script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js" />
+    <Fragment>
+      <script is:inline set:html={turnstileBootstrap} />
+      <script
+        is:inline
+        async
+        defer
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=cpTurnstileInit&render=explicit"
+      />
+    </Fragment>
   )
 }
 
