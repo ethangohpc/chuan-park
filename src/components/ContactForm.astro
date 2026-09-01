@@ -260,12 +260,22 @@ const consentText = `By submitting this enquiry, I confirm that I have read the 
           <input type="hidden" name="renderedAt" data-attr="renderedAt" />
 
           {
+            /*
+             * A Turnstile token dies after 300 seconds. This is a long page — a
+             * visitor can read the price table, the floorplans and the FAQ
+             * before reaching the form — so without `data-refresh-expired` the
+             * token is routinely stale by the time they submit and the server
+             * rejects a perfectly genuine enquiry.
+             */
             turnstileSiteKey && (
               <div
                 class="cf-turnstile lead-form__turnstile"
                 data-sitekey={turnstileSiteKey}
                 data-theme="light"
                 data-action="lead-form"
+                data-refresh-expired="auto"
+                data-retry="auto"
+                data-retry-interval="2000"
               />
             )
           }
@@ -778,17 +788,75 @@ const consentText = `By submitting this enquiry, I confirm that I have read the 
       if (submitLabel) submitLabel.textContent = busy ? 'Sending…' : 'Request Appointment';
     }
 
+    /*
+     * Forces a fresh Turnstile token and waits briefly for it.
+     *
+     * Called ONLY after the server has rejected a submission for a missing or
+     * stale token — never before a normal submit. An earlier version waited for
+     * a token up front, which taxed every submission by up to six seconds
+     * (including ones that were going to fail on the phone number anyway) and
+     * delayed the visitor's own validation errors. The common path must stay
+     * instant; it is the rare failure that should do the extra work.
+     */
+    const refreshTurnstile = async (): Promise<boolean> => {
+      const field = () =>
+        form.querySelector<HTMLInputElement>('input[name="cf-turnstile-response"]');
+      const api = (window as unknown as { turnstile?: { reset?: (el?: Element) => void } })
+        .turnstile;
+      const widget = form.querySelector('.cf-turnstile');
+      if (!api || !widget) return false;
+
+      try {
+        api.reset?.(widget);
+      } catch {
+        return false;
+      }
+
+      const deadline = Date.now() + 5000;
+      while (Date.now() < deadline) {
+        if (field()?.value) return true;
+        await new Promise((r) => setTimeout(r, 150));
+      }
+      return false;
+    };
+
+    /* True once we have already re-solved and resubmitted for this attempt. */
+    let retriedAfterTurnstile = false;
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       clearErrors();
       setBusy(true);
 
       try {
-        const response = await fetch(form.action, {
+        let response = await fetch(form.action, {
           method: 'POST',
           body: new FormData(form),
           headers: { accept: 'application/json' },
         });
+
+        /*
+         * A token that expired while the visitor read the page is the single
+         * most likely reason a genuine enquiry is refused here, and telling
+         * someone to "reload the page and try again" loses the lead. Re-solve
+         * and resend once, silently — they never see the failure.
+         */
+        if (response.status === 400 && !retriedAfterTurnstile) {
+          const peek = await response
+            .clone()
+            .json()
+            .catch(() => null);
+          if (peek?.errors?.form && /anti-spam/i.test(String(peek.errors.form))) {
+            retriedAfterTurnstile = true;
+            if (await refreshTurnstile()) {
+              response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { accept: 'application/json' },
+              });
+            }
+          }
+        }
 
         const data = (await response.json().catch(() => null)) as {
           ok?: boolean;

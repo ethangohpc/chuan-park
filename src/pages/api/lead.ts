@@ -22,6 +22,7 @@ import type { FieldErrors } from '../../utils/validation';
 import { deliverLead, deliveryMode, type LeadRecord } from '../../utils/leadAdapter';
 import { hit, clientKey } from '../../utils/rateLimit';
 import { project, verified } from '../../data/project';
+import { site } from '../../data/site';
 import { agent } from '../../data/agent';
 
 export const prerender = false;
@@ -255,7 +256,15 @@ export const POST: APIRoute = async ({ request }) => {
   // as before until you deliberately switch it on. Note the trade-off: Turnstile
   // needs JavaScript, so once this is enabled a no-JS submission has no token
   // and is refused. Everything else on this page still works without scripting.
-  const turnstileSecret = env.TURNSTILE_SECRET_KEY;
+  /*
+   * Enforced only when a widget is actually on the page. The two halves used to
+   * be independent, which meant a secret set without a site key silently
+   * refused every enquiry on the site — no widget renders, so no token can ever
+   * exist. Pairing them here makes that state unreachable: clearing
+   * `site.turnstileSiteKey` disables the check in the same deploy that removes
+   * the widget, with no secret to remember to delete.
+   */
+  const turnstileSecret = site.turnstileSiteKey ? env.TURNSTILE_SECRET_KEY : undefined;
   /* null means Turnstile is not configured at all, which the notification says
      plainly rather than implying a check that never ran. */
   let turnstilePassed: boolean | null = null;
