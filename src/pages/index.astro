@@ -52,9 +52,18 @@ const district = verified(project.district);
  */
 const advertiser = agent.fullName;
 const cea = verified(agent.ceaRegistrationNumber);
-const identity = cea ? `${advertiser} | ${agent.agencyName} (${cea})` : advertiser;
 
-const title = `${identity} | Marketing ${projectName}`;
+/*
+ * Project first, advertiser second.
+ *
+ * Leading with the salesperson pushed the project name out of a browser tab,
+ * which truncates to roughly 25 characters — every tab read "Ethan Goh |
+ * Huttons A…" and nothing identified the development. This keeps the project
+ * where a visitor scanning tabs and search results expects it, while the
+ * advertiser and CEA number remain in the title rather than being dropped:
+ * "Chuan Park — Marketed by Ethan Goh | Huttons Asia Pte Ltd (R064895H)".
+ */
+const title = `${projectName} — Marketed by ${advertiser} | ${agent.agencyName}${cea ? ` (${cea})` : ''}`;
 
 const description =
   `${advertiser}, licensed real estate salesperson${cea ? ` (CEA Reg. No. ${cea})` : ''} with ` +

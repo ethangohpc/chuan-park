@@ -26,20 +26,20 @@ const nav = site.navigation;
 // On legal pages the anchors do not exist, so link back to the homepage.
 const hrefFor = (href: string) => (showSectionNav ? href : `/${href}`);
 
-/* Shown under the project name in the header lockup, when it is configured. */
 /*
  * The developer's mark is shown only where a marketing authorisation is on
  * record AND the logo permission has been ticked off. Both conditions, so the
  * mark cannot reappear on a project where neither has been established.
+ *
+ * The "Marketed by …" line that used to sit beneath it was removed on request.
+ * The advertiser is still named above the fold by the hero's "Presented by"
+ * line, which is what stops a bare wordmark reading as ownership — do not
+ * remove that one as well.
  */
 const showProjectMark = Boolean(
   (project as { marketingAuthorisation?: { authorised: boolean } }).marketingAuthorisation
     ?.authorised && project.verification.permissionToUseLogos
 );
-
-const ceaLine = isPlaceholder(agent.ceaRegistrationNumber)
-  ? null
-  : `${agent.agencyName} · CEA ${agent.ceaRegistrationNumber}`;
 ---
 
 <header class="site-header" data-header>
@@ -74,10 +74,6 @@ const ceaLine = isPlaceholder(agent.ceaRegistrationNumber)
           <span class="brand__project">{projectName}</span>
         )
       }
-      <span class="brand__by">
-        Marketed by {agent.fullName}
-        {ceaLine && <span class="brand__cea"> · {ceaLine}</span>}
-      </span>
     </a>
 
     <nav class="nav-desktop" aria-label="Section navigation">

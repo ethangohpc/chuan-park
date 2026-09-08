@@ -4,7 +4,7 @@
  * ---------------------------------------------------------------------------
  * The first thing on the page, above the header, on every route.
  *
- * WHY IT IS HERE AND NOT ONLY IN THE FOOTER
+ * MOVED TO THE FOOTER ON REQUEST — read this before moving it back up.
  * A project-named domain, the project name as the page title and the
  * developer's wordmark as the site's logo together read as the developer's
  * own site. That is a misrepresentation problem — Google Ads treats concealing
@@ -12,13 +12,12 @@
  * a footer disclosure at the bottom of a very long page is not where a visitor
  * arriving from an ad forms that impression.
  *
- * So identity is stated before anything else: who is advertising, under whose
- * licence, that this is NOT the developer's site, and a link to the CEA
- * register so a visitor can check the registration independently rather than
- * taking the claim on trust.
+ * It now sits directly above the footer. That is weaker: a visitor who arrives
+ * from an ad, reads the hero and submits the form may never scroll to it. What
+ * carries the identity above the fold instead is the hero's "Presented by"
+ * line — if that is ever removed, this must come back to the top.
  *
- * It is deliberately NOT dismissible. A notice that can be closed is a notice
- * that was not shown, and it costs one line of vertical space.
+ * It is still not dismissible, and it is still on every route.
  */
 import { agent, isPlaceholder } from '../data/agent';
 import { project } from '../data/project';
@@ -95,7 +94,10 @@ const appointed = auth?.authorised ? auth : null;
   .compliance {
     background: var(--c-ink, #1b1a18);
     color: var(--c-on-inverse, #f4f1ea);
-    padding: var(--sp-3) var(--sp-4);
+    padding: var(--sp-5) var(--sp-4);
+    /* Against the footer, which is the same ink, a hairline keeps the notice
+       from dissolving into it. */
+    border-bottom: 1px solid rgb(244 241 234 / 0.16);
   }
 
   .compliance__text {
