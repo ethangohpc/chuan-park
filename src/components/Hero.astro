@@ -257,12 +257,21 @@ const media = project.media;
     max-width: 62rem;
   }
 
+  /*
+   * Deliberately identical to .hero__updated — same size, same colour, same
+   * case. It was already --step--1; the uppercase and letter-spacing were what
+   * made it read as larger and louder than the line beneath it.
+   *
+   * NOT smaller than this. --step--1 is the fine print this page already uses,
+   * and a required disclosure set smaller than the surrounding fine print
+   * starts to look like something being tucked away — which is the same policy
+   * area that caused the suspension. Small and unobtrusive is fine; smaller
+   * than everything around it is not.
+   */
   .hero__presented {
     margin: 0;
     margin-top: var(--sp-2);
     font-size: var(--step--1);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
     color: var(--c-on-inverse-2);
   }
 
