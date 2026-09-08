@@ -11,7 +11,7 @@
  * dimensions, fetchpriority="high" and no animation — it is the LCP element.
  */
 import { project, verified, isPlaceholder } from '../data/project';
-import { whatsappHref } from '../data/agent';
+import { agent, isPlaceholder as agentPlaceholder, whatsappHref } from '../data/agent';
 import { interpolate } from '../utils/format';
 
 const projectName = verified(project.name) ?? '[PROJECT NAME]';
@@ -57,6 +57,12 @@ const heroFacts = [
 
 /* Opens WhatsApp directly, so it is tracked as click_whatsapp rather than as a
    second book_showflat — the visitor is doing a different thing. */
+/* "Presented by …" — omitted entirely unless the CEA details are filled in,
+   so it can never render as a half-finished disclosure. */
+const presentedBy = agentPlaceholder(agent.ceaRegistrationNumber)
+  ? null
+  : `Presented by ${agent.fullName} · ${agent.agencyName} · CEA ${agent.ceaRegistrationNumber}`;
+
 const wa = whatsappHref(
   interpolate(project.contact.whatsappMessages.general, { 'PROJECT NAME': projectName })
 );
@@ -87,6 +93,15 @@ const media = project.media;
   </div>
 
   <div class="hero__content container">
+    {
+      /*
+       * Who is presenting this, stated before the project name rather than
+       * after it. On a page reached from an ad, this is the line that prevents
+       * the hero from reading as the developer's own announcement.
+       */
+      presentedBy && <p class="hero__presented">{presentedBy}</p>
+    }
+
     <h1 class="hero__title">{headline}</h1>
 
     {subheadline && <p class="hero__sub">{subheadline}</p>}
@@ -235,6 +250,14 @@ const media = project.media;
     gap: var(--sp-4);
     padding-block: var(--sp-7) calc(var(--sp-8) + env(safe-area-inset-bottom));
     max-width: 62rem;
+  }
+
+  .hero__presented {
+    margin: 0;
+    font-size: var(--step--1);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-on-inverse-2);
   }
 
   .hero__title {

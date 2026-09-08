@@ -23,6 +23,7 @@
  */
 import SectionHeader from './SectionHeader.astro';
 import { project, verified } from '../data/project';
+import { site } from '../data/site';
 import { formatDate, isoDate } from '../utils/format';
 import { unitGroups, areaRange } from '../utils/unitGroups';
 
@@ -135,11 +136,20 @@ const rows = unitGroups();
 
     {
       /*
-      Stripped to the single primary action. The pricing disclaimer that used to
-      sit here — indicative pricing, BSD/ABSD excluded, not an offer — is still
-      carried by the footer on every page and in full on /disclaimer.
+      RESTORED after the Google Ads suspension for unacceptable business
+      practices. This was stripped for visual tidiness, which was the wrong call
+      on a page whose purpose is quoting prices to people arriving from ads. A
+      price shown without saying it is indicative, excludes duties and is not an
+      offer is the kind of understated commercial term the policy is about. It
+      belongs beside the number, not only in the footer.
     */
     }
+    <p class="fineprint price__disclaimer">
+      {site.legal.pricingDisclaimer} Figures exclude Buyer’s Stamp Duty, Additional Buyer’s Stamp Duty
+      where applicable, legal fees and other transaction costs. Nothing on this page is an offer or a
+      contract. E&amp;OE.
+    </p>
+
     <div class="price__cta">
       <a class="btn" href="#contact" data-track="request_price_list" data-track-location="price">
         Request Latest Price List
@@ -283,8 +293,13 @@ const rows = unitGroups();
     margin-top: var(--sp-3);
   }
 
+  .price__disclaimer {
+    margin-top: var(--sp-5);
+    max-width: var(--measure);
+  }
+
   .price__cta {
-    margin-top: var(--sp-6);
+    margin-top: var(--sp-5);
   }
 
   .price__cta-title {

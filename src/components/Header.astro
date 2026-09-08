@@ -12,6 +12,7 @@
  * - Legal links stay in the footer, never here.
  */
 import { site } from '../data/site';
+import { agent } from '../data/agent';
 import { project, isPlaceholder } from '../data/project';
 
 interface Props {
@@ -24,26 +25,40 @@ const projectName = isPlaceholder(project.name) ? '[PROJECT NAME]' : project.nam
 const nav = site.navigation;
 // On legal pages the anchors do not exist, so link back to the homepage.
 const hrefFor = (href: string) => (showSectionNav ? href : `/${href}`);
+
+/* Shown under the project name in the header lockup, when it is configured. */
+const ceaLine = isPlaceholder(agent.ceaRegistrationNumber)
+  ? null
+  : `${agent.agencyName} · CEA ${agent.ceaRegistrationNumber}`;
 ---
 
 <header class="site-header" data-header>
   <div class="site-header__inner container">
+    {
+      /*
+       * The brand here is the ADVERTISER, not the development.
+       *
+       * The developer's wordmark used to sit in this slot, which is the single
+       * strongest signal that a visitor is on the developer's own site — a logo
+       * in the top-left corner is read as ownership. The mark is not ours to use
+       * that way, and using it here is what turns a marketing page into an
+       * apparent official one.
+       *
+       * The project name is still the first line, because that is what the
+       * visitor searched for; the salesperson and agency sit directly beneath it
+       * so the relationship is legible at a glance.
+       */
+    }
     <a
       class="brand"
       href={showSectionNav ? '#top' : '/'}
-      aria-label={`${projectName} — back to top`}
+      aria-label={`${projectName}, marketed by ${agent.fullName} — back to top`}
     >
-      {
-        /* alt="" is deliberate: the link above already carries the project name,
-          and a described image here would announce it a second time. */
-      }
-      <img
-        class="brand__logo"
-        src={project.media.logo}
-        width={project.media.logoWidth}
-        height={project.media.logoHeight}
-        alt=""
-      />
+      <span class="brand__project">{projectName}</span>
+      <span class="brand__by">
+        Marketed by {agent.fullName}
+        {ceaLine && <span class="brand__cea"> · {ceaLine}</span>}
+      </span>
     </a>
 
     <nav class="nav-desktop" aria-label="Section navigation">
@@ -156,10 +171,51 @@ const hrefFor = (href: string) => (showSectionNav ? href : `/${href}`);
 
   .brand {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1em;
     text-decoration: none;
     padding-block: var(--sp-2);
-    flex: none;
+    /*
+     * Must be allowed to shrink. `flex: none` plus a long "Marketed by …" line
+     * pushed the menu button off the right edge of a 390px viewport — the
+     * button was unreachable and the accessibility suite could not open the
+     * mobile menu at all.
+     */
+    flex: 0 1 auto;
+    min-width: 0;
+    line-height: 1.15;
+  }
+
+  .brand__project {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    letter-spacing: 0.02em;
+    color: var(--c-ink);
+  }
+
+  .brand__by {
+    font-size: var(--step--2);
+    letter-spacing: 0.04em;
+    color: var(--c-ink-2);
+    /* One line, always. Allowed to wrap it broke mid-name — "Marketed by Ethan
+       / Goh" — which reads worse than dropping the registration number. */
+    white-space: nowrap;
+  }
+
+  .brand__cea {
+    white-space: nowrap;
+  }
+
+  /*
+   * Below the desktop-nav breakpoint the registration number drops out of the
+   * header so the identity line stays on one line. It is still stated in full
+   * in the notice directly above, in the footer and on every legal page.
+   */
+  @media (max-width: 61.99rem) {
+    .brand__cea {
+      display: none;
+    }
   }
 
   .brand__logo {

@@ -13,6 +13,7 @@ import Footer from '../components/Footer.astro';
 import MobileContactBar from '../components/MobileContactBar.astro';
 import Analytics from '../components/Analytics.astro';
 import ConsentNotice from '../components/ConsentNotice.astro';
+import ComplianceNotice from '../components/ComplianceNotice.astro';
 
 import { site } from '../data/site';
 import { project, isPlaceholder } from '../data/project';
@@ -148,6 +149,9 @@ const projectName = isPlaceholder(project.name) ? 'New launch' : project.name;
 
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
+
+    {/* Identity before anything else — see ComplianceNotice.astro. */}
+    <ComplianceNotice />
 
     <Header showSectionNav={showSectionNav} />
 

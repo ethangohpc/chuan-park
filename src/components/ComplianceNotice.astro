@@ -1,0 +1,104 @@
+---
+/**
+ * ADVERTISER IDENTITY NOTICE
+ * ---------------------------------------------------------------------------
+ * The first thing on the page, above the header, on every route.
+ *
+ * WHY IT IS HERE AND NOT ONLY IN THE FOOTER
+ * A project-named domain, the project name as the page title and the
+ * developer's wordmark as the site's logo together read as the developer's
+ * own site. That is a misrepresentation problem — Google Ads treats concealing
+ * or misstating who is behind a site as an unacceptable business practice, and
+ * a footer disclosure at the bottom of a very long page is not where a visitor
+ * arriving from an ad forms that impression.
+ *
+ * So identity is stated before anything else: who is advertising, under whose
+ * licence, that this is NOT the developer's site, and a link to the CEA
+ * register so a visitor can check the registration independently rather than
+ * taking the claim on trust.
+ *
+ * It is deliberately NOT dismissible. A notice that can be closed is a notice
+ * that was not shown, and it costs one line of vertical space.
+ */
+import { agent, isPlaceholder } from '../data/agent';
+import { site } from '../data/site';
+
+const registered = isPlaceholder(agent.registeredName) ? agent.fullName : agent.registeredName;
+const cea = isPlaceholder(agent.ceaRegistrationNumber) ? null : agent.ceaRegistrationNumber;
+const licence = isPlaceholder(agent.agencyLicenceNumber) ? null : agent.agencyLicenceNumber;
+const register = isPlaceholder(agent.ceaPublicRegisterUrl) ? null : agent.ceaPublicRegisterUrl;
+
+/*
+ * Rendered only when the identity is actually complete. A half-filled notice
+ * would be worse than none: it would look like a disclosure while failing to
+ * identify anyone.
+ */
+const complete = Boolean(cea && licence && !site.legal.claimsOfficialDeveloperSite);
+---
+
+{
+  complete && (
+    <aside class="compliance" aria-label="Advertiser identity and independence notice">
+      <p class="compliance__text">
+        <strong>Important notice.</strong> This is an independent marketing website operated by{' '}
+        {registered} (CEA Reg. No. {cea}), a licensed real estate salesperson with{' '}
+        {agent.agencyName} (CEA Licence No. {licence}). It is <strong>not</strong> the official
+        developer website and is not affiliated with, endorsed by, or operated by the developer. All
+        information is for general reference only.
+        {register && (
+          <>
+            {' '}
+            <a class="compliance__link" href={register} target="_blank" rel="noopener noreferrer">
+              Verify this registration on the CEA Public Register
+              <span class="visually-hidden"> (opens in a new tab)</span>
+            </a>
+          </>
+        )}
+      </p>
+    </aside>
+  )
+}
+
+<style>
+  .compliance {
+    background: var(--c-ink, #1b1a18);
+    color: var(--c-on-inverse, #f4f1ea);
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .compliance__text {
+    margin: 0 auto;
+    max-width: var(--container, 76rem);
+    font-size: var(--step--1);
+    line-height: 1.5;
+    /* Not var(--c-on-inverse-2): this must read as content, not as fine print
+       someone is entitled to skip. */
+    color: inherit;
+  }
+
+  .compliance strong {
+    font-weight: 600;
+  }
+
+  .compliance__link {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .compliance__link:hover,
+  .compliance__link:focus-visible {
+    text-decoration-thickness: 2px;
+  }
+
+  /* Tighter on phones: the wording is unchanged, it just costs less of the
+     first screen. */
+  @media (max-width: 47.99rem) {
+    .compliance {
+      padding: var(--sp-2) var(--sp-4);
+    }
+    .compliance__text {
+      font-size: var(--step--2);
+    }
+  }
+</style>

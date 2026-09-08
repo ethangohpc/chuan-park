@@ -28,6 +28,7 @@ import ContactForm from '../components/ContactForm.astro';
 import Lightbox from '../components/Lightbox.astro';
 
 import { project, verified } from '../data/project';
+import { agent } from '../data/agent';
 import { buildGraph } from '../utils/structuredData';
 
 const projectName = verified(project.name) ?? '[PROJECT NAME]';
@@ -36,16 +37,30 @@ const district = verified(project.district);
 
 /*
  * TITLE AND DESCRIPTION
- * Written for the project-name ad groups (price, price list, showflat,
- * floorplan, brochure, gallery, location, developer, review) without
- * keyword-stuffing. Keep the project name first — it is what people search.
+ * ---------------------------------------------------------------------------
+ * The advertiser comes first, then the project.
+ *
+ * "Chuan Park — Price, Floorplans & Showflat" reads as the project's own site,
+ * which is the impression that gets a lead-generation page suspended for
+ * misrepresentation. Leading with the salesperson, the agency and the CEA
+ * registration makes the nature of the site unambiguous in the tab, in the
+ * search result and in every link preview — the three places a visitor judges
+ * it before the page has even rendered.
+ *
+ * The project name is still present and still early, so the ad groups built
+ * around it keep their relevance.
  */
-const title = `${projectName} — Price, Floorplans & Showflat | ${location}`;
+const advertiser = verified(agent.registeredName) ?? agent.fullName;
+const cea = verified(agent.ceaRegistrationNumber);
+const identity = cea ? `${advertiser} | ${agent.agencyName} (${cea})` : advertiser;
+
+const title = `${identity} | Marketing ${projectName}`;
 
 const description =
-  `${projectName} is a new private residential launch in ${location}${district ? `, ${district}` : ''}. ` +
-  `See indicative pricing, unit types and floorplans, the brochure, the gallery and showflat details, ` +
-  `then arrange a viewing. Independent site by Ethan Goh, Huttons Asia Pte Ltd.`;
+  `${advertiser}, licensed real estate salesperson${cea ? ` (CEA Reg. No. ${cea})` : ''} with ` +
+  `${agent.agencyName}, marketing ${projectName} — a new private residential launch in ` +
+  `${location}${district ? `, ${district}` : ''}. Independent marketing website, not the official ` +
+  `developer website. Indicative pricing, unit types, floorplans and showflat enquiries.`;
 
 const jsonLd = buildGraph({
   pathname: '/',
