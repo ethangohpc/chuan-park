@@ -31,11 +31,22 @@ const registerUrl = isPlaceholder(agent.ceaProfileUrl)
 const bio = agent.bioLong.filter((p) => !isPlaceholder(p));
 const specialisations = agent.specialisations.filter((s) => !isPlaceholder(s));
 
+/*
+ * The registered name belongs here and only here. Everywhere else the site uses
+ * the working name, but the CEA Public Register is searched by the name on the
+ * register — so this is the page that has to carry it, next to the number, for
+ * a visitor who actually wants to check.
+ */
 const credentials = [
   agent.agencyName,
+  isPlaceholder(agent.registeredName) || agent.registeredName === agent.fullName
+    ? null
+    : `Registered as ${agent.registeredName}`,
   `CEA Reg. ${agent.ceaRegistrationNumber}`,
   `Agency Licence ${agent.agencyLicenceNumber}`,
-].join(' · ');
+]
+  .filter(Boolean)
+  .join(' · ');
 
 const title = `${agent.fullName} — Your Singapore Property Adviser | ${agent.agencyName}`;
 const description = `${agent.fullName}, CEA registration ${agent.ceaRegistrationNumber}, of ${agent.agencyName}. Who operates this independent marketing website, and how to verify the registration.`;

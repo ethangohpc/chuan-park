@@ -236,6 +236,35 @@ export const project = {
     longitude: '[LONGITUDE]',
   },
 
+  /**
+   * MARKETING AUTHORISATION
+   * -------------------------------------------------------------------------
+   * Evidenced by "Confirmation of Authorised Marketing Agency Appointment and
+   * Authorisation for Advertising Activities", 17 August 2026, signed by Ngiam
+   * Juyong (Director, Huttons Asia) and acknowledged by Elaine Koh (Marketing
+   * Manager, Kingsford Huray Development Pte. Ltd.). Keep a copy — Google may
+   * ask for it, and the CEA advertising rules expect you to be able to produce
+   * it.
+   *
+   * WHAT IT COVERS: Huttons Asia and its registered salespersons may market,
+   * advertise and generate enquiries for Chuan Park, expressly including
+   * Google Ads. That is what lets this page state an appointment, and use the
+   * development's marks in marketing it.
+   *
+   * WHAT IT DOES NOT COVER: it does not make this the developer's own website,
+   * and nothing here may say or imply that it is. The letter names three
+   * developments — Lentor Gardens Residences, One Marina Gardens and Chuan
+   * Park. It does NOT cover Grand Dunman, so none of this may be copied to
+   * that site.
+   */
+  marketingAuthorisation: {
+    authorised: true,
+    /** The entity that granted it, which is not the same as `developer` above. */
+    grantedBy: 'Kingsford Huray Development Pte Ltd',
+    agency: 'Huttons Asia Pte Ltd',
+    letterDated: '2026-08-17',
+  },
+
   // -- Pricing -------------------------------------------------------------
   /**
    * Prices are the "from" figures in the 22 August 2026 project export
@@ -1245,9 +1274,9 @@ export const project = {
     distanceClaims: false, // the documents' own claims, not measured
     travelTimeClaims: false,
     schoolInformation: false, // school names only; 1 km bands stated by the documents, not verified
-    agencyAppointmentStatus: false,
-    developerAppointmentStatus: false,
-    permissionToUseLogos: false,
+    agencyAppointmentStatus: true, // authorisation letter, 17 Aug 2026
+    developerAppointmentStatus: true, // authorisation letter, 17 Aug 2026
+    permissionToUseLogos: true, // covered by the marketing authorisation above
     permissionToUseBrochure: false,
     permissionToUseImages: false,
     agentCeaDetails: true, // CEA reg R064895H and Huttons licence L3008899K both confirmed by Ethan

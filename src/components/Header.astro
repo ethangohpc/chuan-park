@@ -27,6 +27,16 @@ const nav = site.navigation;
 const hrefFor = (href: string) => (showSectionNav ? href : `/${href}`);
 
 /* Shown under the project name in the header lockup, when it is configured. */
+/*
+ * The developer's mark is shown only where a marketing authorisation is on
+ * record AND the logo permission has been ticked off. Both conditions, so the
+ * mark cannot reappear on a project where neither has been established.
+ */
+const showProjectMark = Boolean(
+  (project as { marketingAuthorisation?: { authorised: boolean } }).marketingAuthorisation
+    ?.authorised && project.verification.permissionToUseLogos
+);
+
 const ceaLine = isPlaceholder(agent.ceaRegistrationNumber)
   ? null
   : `${agent.agencyName} · CEA ${agent.ceaRegistrationNumber}`;
@@ -36,17 +46,14 @@ const ceaLine = isPlaceholder(agent.ceaRegistrationNumber)
   <div class="site-header__inner container">
     {
       /*
-       * The brand here is the ADVERTISER, not the development.
+       * The development's own wordmark, restored under the marketing
+       * authorisation on file — but never on its own.
        *
-       * The developer's wordmark used to sit in this slot, which is the single
-       * strongest signal that a visitor is on the developer's own site — a logo
-       * in the top-left corner is read as ownership. The mark is not ours to use
-       * that way, and using it here is what turns a marketing page into an
-       * apparent official one.
-       *
-       * The project name is still the first line, because that is what the
-       * visitor searched for; the salesperson and agency sit directly beneath it
-       * so the relationship is legible at a glance.
+       * A logo alone in this position is read as ownership, which is what made
+       * the page look like the developer's site. Paired with "Marketed by …"
+       * directly beneath, it says what it actually means: this is the
+       * development being marketed, and here is who is marketing it. Remove the
+       * authorisation and `showProjectMark` goes false, taking the mark with it.
        */
     }
     <a
@@ -54,7 +61,19 @@ const ceaLine = isPlaceholder(agent.ceaRegistrationNumber)
       href={showSectionNav ? '#top' : '/'}
       aria-label={`${projectName}, marketed by ${agent.fullName} — back to top`}
     >
-      <span class="brand__project">{projectName}</span>
+      {
+        showProjectMark ? (
+          <img
+            class="brand__logo"
+            src={project.media.logo}
+            width={project.media.logoWidth}
+            height={project.media.logoHeight}
+            alt={projectName}
+          />
+        ) : (
+          <span class="brand__project">{projectName}</span>
+        )
+      }
       <span class="brand__by">
         Marketed by {agent.fullName}
         {ceaLine && <span class="brand__cea"> · {ceaLine}</span>}
@@ -219,7 +238,7 @@ const ceaLine = isPlaceholder(agent.ceaRegistrationNumber)
   }
 
   .brand__logo {
-    height: 44px;
+    height: 34px;
     width: auto;
     flex: none;
     /*

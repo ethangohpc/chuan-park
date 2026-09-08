@@ -50,7 +50,7 @@ const district = verified(project.district);
  * The project name is still present and still early, so the ad groups built
  * around it keep their relevance.
  */
-const advertiser = verified(agent.registeredName) ?? agent.fullName;
+const advertiser = agent.fullName;
 const cea = verified(agent.ceaRegistrationNumber);
 const identity = cea ? `${advertiser} | ${agent.agencyName} (${cea})` : advertiser;
 

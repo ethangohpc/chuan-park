@@ -83,8 +83,7 @@ export const agent: AgentConfig = {
   // -----------------------------------------------------------------------
 
   profileImage: '/images/agent/ethan-goh.webp',
-  profileImageAlt:
-    'Portrait of Ethan Goh (Goh Pei Chang Ethan), real estate salesperson with Huttons Asia Pte Ltd',
+  profileImageAlt: 'Portrait of Ethan Goh, real estate salesperson with Huttons Asia Pte Ltd',
   profileImageWidth: 400,
   profileImageHeight: 514,
 

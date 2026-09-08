@@ -21,9 +21,17 @@
  * that was not shown, and it costs one line of vertical space.
  */
 import { agent, isPlaceholder } from '../data/agent';
+import { project } from '../data/project';
 import { site } from '../data/site';
 
-const registered = isPlaceholder(agent.registeredName) ? agent.fullName : agent.registeredName;
+/*
+ * The working name, not the registered one. "Goh Pei Chang Ethan" is what the
+ * CEA register lists, but the registration NUMBER beside it is the unique
+ * identifier a visitor actually searches on, and the full registered name is
+ * still stated on /about-ethan and in the footer. Leading with the name people
+ * know reads as a person rather than as boilerplate.
+ */
+const registered = agent.fullName;
 const cea = isPlaceholder(agent.ceaRegistrationNumber) ? null : agent.ceaRegistrationNumber;
 const licence = isPlaceholder(agent.agencyLicenceNumber) ? null : agent.agencyLicenceNumber;
 const register = isPlaceholder(agent.ceaPublicRegisterUrl) ? null : agent.ceaPublicRegisterUrl;
@@ -34,17 +42,41 @@ const register = isPlaceholder(agent.ceaPublicRegisterUrl) ? null : agent.ceaPub
  * identify anyone.
  */
 const complete = Boolean(cea && licence && !site.legal.claimsOfficialDeveloperSite);
+
+/*
+ * Where a signed appointment exists, the notice says so — and drops the words
+ * "not affiliated". With a letter on file that phrase would be false: the
+ * agency IS formally appointed. What stays true either way, and is the part the
+ * policy is actually about, is that this is not the developer's own website.
+ */
+const auth = (
+  project as { marketingAuthorisation?: { authorised: boolean; grantedBy: string; agency: string } }
+).marketingAuthorisation;
+const appointed = auth?.authorised ? auth : null;
 ---
 
 {
   complete && (
     <aside class="compliance" aria-label="Advertiser identity and independence notice">
       <p class="compliance__text">
-        <strong>Important notice.</strong> This is an independent marketing website operated by{' '}
-        {registered} (CEA Reg. No. {cea}), a licensed real estate salesperson with{' '}
-        {agent.agencyName} (CEA Licence No. {licence}). It is <strong>not</strong> the official
-        developer website and is not affiliated with, endorsed by, or operated by the developer. All
-        information is for general reference only.
+        <strong>Important notice.</strong> This is a marketing website operated by {registered} (CEA
+        Reg. No. {cea}), a licensed real estate salesperson with {agent.agencyName} (CEA Licence No.{' '}
+        {licence}).
+        {appointed ? (
+          <>
+            {' '}
+            {appointed.agency} is an authorised marketing agency for this development, appointed by{' '}
+            {appointed.grantedBy}. This is <strong>not</strong> the official developer website and
+            is not operated by the developer.
+          </>
+        ) : (
+          <>
+            {' '}
+            It is <strong>not</strong> the official developer website and is not affiliated with,
+            endorsed by, or operated by the developer.
+          </>
+        )}{' '}
+        All information is for general reference only.
         {register && (
           <>
             {' '}
