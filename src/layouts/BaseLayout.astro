@@ -150,19 +150,14 @@ const projectName = isPlaceholder(project.name) ? 'New launch' : project.name;
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
 
+    {/* Identity before anything else — see ComplianceNotice.astro. */}
+    <ComplianceNotice />
+
     <Header showSectionNav={showSectionNav} />
 
     <main id="main">
       <slot />
     </main>
-
-    {
-      /*
-      Sits directly above the footer rather than above the header.
-      ComplianceNotice.astro records what that trade-off costs.
-    */
-    }
-    <ComplianceNotice />
 
     <Footer />
 
