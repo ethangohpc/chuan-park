@@ -274,19 +274,27 @@ const media = project.media;
     margin: 0;
   }
 
+  /*
+   * Bordered chips rather than a full-width ruled row. Same facts, but each one
+   * reads as a discrete specification the way a developer's own launch page
+   * presents them, instead of running together into a band of small text.
+   */
   .hero__facts {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--sp-3) var(--sp-6);
-    padding-block: var(--sp-4);
-    border-top: 1px solid rgb(244 241 234 / 0.2);
-    border-bottom: 1px solid rgb(244 241 234 / 0.2);
-    margin-block: var(--sp-2);
+    gap: var(--sp-3);
+    padding: 0;
+    margin-block: var(--sp-3);
   }
 
   .hero__facts li {
     display: grid;
     gap: 2px;
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid rgb(244 241 234 / 0.28);
+    border-radius: var(--radius-sm, 4px);
+    background: rgb(20 20 20 / 0.22);
+    backdrop-filter: blur(2px);
   }
 
   .hero__facts-label {

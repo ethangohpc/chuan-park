@@ -823,7 +823,13 @@ export const project = {
   // -- Content -------------------------------------------------------------
   content: {
     heroHeadline: 'Chuan Park',
-    heroSubheadline: '',
+    /*
+     * The development's own line, from the cover of the preview catalogue. It
+     * is the project's positioning rather than a claim of our own, which is why
+     * it can sit under the headline without becoming something that needs
+     * verifying.
+     */
+    heroSubheadline: 'Tranquil nature amidst urban convenience.',
     heroSupporting: '',
 
     overview: [

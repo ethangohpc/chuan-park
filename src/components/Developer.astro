@@ -16,6 +16,7 @@
 import SectionHeader from './SectionHeader.astro';
 import { project, isPlaceholder, verified } from '../data/project';
 
+const projectName = verified(project.name) ?? '[PROJECT NAME]';
 const developerName =
   verified(project.developerShortName) ?? verified(project.developer) ?? '[DEVELOPER NAME]';
 const profile = project.content.developerProfile.filter((p) => !isPlaceholder(p));
@@ -24,7 +25,12 @@ const media = project.media;
 
 <section class="section" id="developer" aria-labelledby="developer-title">
   <div class="container">
-    <SectionHeader eyebrow="About the developer" title={developerName} id="developer-title" />
+    <SectionHeader
+      eyebrow="About the developer"
+      title={`${projectName} Developer`}
+      lede={developerName}
+      id="developer-title"
+    />
 
     <div class="dev__layout">
       <div class="dev__main">
