@@ -93,15 +93,6 @@ const media = project.media;
   </div>
 
   <div class="hero__content container">
-    {
-      /*
-       * Who is presenting this, stated before the project name rather than
-       * after it. On a page reached from an ad, this is the line that prevents
-       * the hero from reading as the developer's own announcement.
-       */
-      presentedBy && <p class="hero__presented">{presentedBy}</p>
-    }
-
     <h1 class="hero__title">{headline}</h1>
 
     {subheadline && <p class="hero__sub">{subheadline}</p>}
@@ -152,6 +143,20 @@ const media = project.media;
         )
       }
     </div>
+
+    {
+      /*
+       * Sits at the foot of the hero, where the last-updated line sits on the
+       * other site.
+       *
+       * With the identity notice moved to the footer and the header line
+       * removed, this is the only place the advertiser is named above the fold.
+       * It is what stops the development's own wordmark and imagery reading as
+       * the developer's own site. Do not remove it without putting the notice
+       * back at the top.
+       */
+      presentedBy && <p class="hero__presented">{presentedBy}</p>
+    }
 
     {
       /*
@@ -254,6 +259,7 @@ const media = project.media;
 
   .hero__presented {
     margin: 0;
+    margin-top: var(--sp-2);
     font-size: var(--step--1);
     letter-spacing: 0.08em;
     text-transform: uppercase;
