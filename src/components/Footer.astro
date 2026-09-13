@@ -20,13 +20,6 @@ const updatedIso = isoDate(project.lastUpdated);
 const year = new Date().getFullYear();
 
 /*
- * The footer sits on near-black, so a dark lockup would disappear into it.
- * `media.logoLight` is the same artwork in the paper tone; where a project's
- * logo already reads on dark, leave it unset and this falls back to `logo`.
- */
-const footerLogo = verified(project.media.logoLight) ?? project.media.logo;
-
-/*
  * The Information column. "Terms of Use" keeps that wording rather than the
  * "Terms & Conditions" of the reference footer, because that is the heading on
  * the page it opens — a link should say what it leads to.
@@ -50,15 +43,7 @@ const legalLinks: { label: string; href: string; external?: boolean }[] = [
   <div class="container">
     <div class="site-footer__top">
       <div class="site-footer__brand">
-        <img
-          class="site-footer__logo"
-          src={footerLogo}
-          width={project.media.logoWidth}
-          height={project.media.logoHeight}
-          alt={projectName}
-          loading="lazy"
-          decoding="async"
-        />
+        <p class="site-footer__name">{agent.fullName}</p>
 
         <p class="site-footer__disclosure">
           <span class="site-footer__disclosure-icon" aria-hidden="true">&#9432;</span>
@@ -142,7 +127,7 @@ const legalLinks: { label: string; href: string; external?: boolean }[] = [
         not reflect the completed development or unit.
         {
           !isPlaceholder(project.developer) && (
-            <> No affiliation with, or endorsement by, {project.developer} is claimed or implied.</>
+            <> This website is not operated by {project.developer}.</>
           )
         }
         {' '}Full terms are set out in the <a href="/disclaimer">Disclaimer</a>. E&amp;OE.
@@ -194,12 +179,12 @@ const legalLinks: { label: string; href: string; external?: boolean }[] = [
     justify-items: start;
   }
 
-  .site-footer__logo {
-    height: 58px;
-    width: auto;
-    /* The global img placeholder tint would show through the transparent
-       lockup as a pale card on the dark footer. */
-    background: none;
+  .site-footer__name {
+    margin: 0 0 var(--sp-3);
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    letter-spacing: 0.02em;
+    color: var(--c-on-inverse);
   }
 
   /* The disclosure is boxed rather than set as running text: it is the one line

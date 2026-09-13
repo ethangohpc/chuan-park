@@ -2,9 +2,12 @@
 /**
  * STICKY HEADER + ACCESSIBLE MOBILE MENU
  * ---------------------------------------------------------------------------
- * - The project's logo (not the agent's personal branding) sits on the left and
- *   links back to the top of the page. The link carries the accessible name, so
- *   the image itself is decorative.
+ * - The advertiser's own name sits on the left as the site's identity and links
+ *   back to the top of the page. Never the project's or developer's mark: a
+ *   development's logo in this position is read as "this is the developer's
+ *   site", which is what Google Ads suspends for. Both reinstated comparable
+ *   sites (The Continuum, Lentor Gardens Residences) use the salesperson's
+ *   name here.
  * - Desktop shows the nine section links plus a distinct "Book Showflat" CTA.
  * - Mobile collapses to a hamburger dialog: Escape closes it, focus is
  *   trapped, background scroll is locked, and selecting a link closes it.
@@ -26,54 +29,16 @@ const nav = site.navigation;
 // On legal pages the anchors do not exist, so link back to the homepage.
 const hrefFor = (href: string) => (showSectionNav ? href : `/${href}`);
 
-/*
- * The developer's mark is shown only where a marketing authorisation is on
- * record AND the logo permission has been ticked off. Both conditions, so the
- * mark cannot reappear on a project where neither has been established.
- *
- * The "Marketed by …" line that used to sit beneath it was removed on request.
- * The advertiser is still named above the fold by the hero's "Presented by"
- * line, which is what stops a bare wordmark reading as ownership — do not
- * remove that one as well.
- */
-const showProjectMark = Boolean(
-  (project as { marketingAuthorisation?: { authorised: boolean } }).marketingAuthorisation
-    ?.authorised && project.verification.permissionToUseLogos
-);
 ---
 
 <header class="site-header" data-header>
   <div class="site-header__inner container">
-    {
-      /*
-       * The development's own wordmark, restored under the marketing
-       * authorisation on file — but never on its own.
-       *
-       * A logo alone in this position is read as ownership, which is what made
-       * the page look like the developer's site. Paired with "Marketed by …"
-       * directly beneath, it says what it actually means: this is the
-       * development being marketed, and here is who is marketing it. Remove the
-       * authorisation and `showProjectMark` goes false, taking the mark with it.
-       */
-    }
     <a
       class="brand"
       href={showSectionNav ? '#top' : '/'}
-      aria-label={`${projectName}, marketed by ${agent.fullName} — back to top`}
+      aria-label={`${agent.fullName}, marketing ${projectName} — back to top`}
     >
-      {
-        showProjectMark ? (
-          <img
-            class="brand__logo"
-            src={project.media.logo}
-            width={project.media.logoWidth}
-            height={project.media.logoHeight}
-            alt={projectName}
-          />
-        ) : (
-          <span class="brand__project">{projectName}</span>
-        )
-      }
+      <span class="brand__name">{agent.fullName}</span>
     </a>
 
     <nav class="nav-desktop" aria-label="Section navigation">
@@ -123,7 +88,7 @@ const showProjectMark = Boolean(
 <div class="mobile-menu" id="mobile-menu" data-mobile-menu hidden>
   <div class="mobile-menu__panel" role="dialog" aria-modal="true" aria-label="Navigation menu">
     <div class="mobile-menu__head">
-      <span class="mobile-menu__title">{projectName}</span>
+      <span class="mobile-menu__title">{agent.fullName}</span>
       <button type="button" class="mobile-menu__close" data-menu-close>
         <span aria-hidden="true">&times;</span>
         <span class="visually-hidden">Close navigation menu</span>
@@ -202,48 +167,12 @@ const showProjectMark = Boolean(
     line-height: 1.15;
   }
 
-  .brand__project {
+  .brand__name {
     font-family: var(--font-display);
     font-size: var(--step-1);
     letter-spacing: 0.02em;
     color: var(--c-ink);
-  }
-
-  .brand__by {
-    font-size: var(--step--2);
-    letter-spacing: 0.04em;
-    color: var(--c-ink-2);
-    /* One line, always. Allowed to wrap it broke mid-name — "Marketed by Ethan
-       / Goh" — which reads worse than dropping the registration number. */
     white-space: nowrap;
-  }
-
-  .brand__cea {
-    white-space: nowrap;
-  }
-
-  /*
-   * Below the desktop-nav breakpoint the registration number drops out of the
-   * header so the identity line stays on one line. It is still stated in full
-   * in the notice directly above, in the footer and on every legal page.
-   */
-  @media (max-width: 61.99rem) {
-    .brand__cea {
-      display: none;
-    }
-  }
-
-  .brand__logo {
-    height: 34px;
-    width: auto;
-    flex: none;
-    /*
-     * The global `img` rule tints every image with --c-stone so a slow photo
-     * shows a placeholder block rather than nothing. The logo is transparent
-     * vector, so that tint would render as a pale card behind it — it has to
-     * be cleared here for the lockup to sit directly on the header.
-     */
-    background: none;
   }
 
   .nav-desktop {
@@ -253,7 +182,7 @@ const showProjectMark = Boolean(
   .nav-desktop ul {
     display: flex;
     align-items: center;
-    gap: clamp(0.7rem, 1.1vw, 1.4rem);
+    gap: clamp(0.6rem, 0.9vw, 1.2rem);
   }
 
   .nav-desktop a {
@@ -265,7 +194,14 @@ const showProjectMark = Boolean(
     text-transform: uppercase;
     text-decoration: none;
     color: var(--c-ink-3);
-    white-space: nowrap;
+    /*
+     * Ten links plus the name and the CTA do not fit one line inside the
+     * container. Multi-word labels ("About the Developer", "About This
+     * Website") wrap to two lines instead — the name must never be squeezed.
+     */
+    max-width: 8.5em;
+    line-height: 1.25;
+    text-align: center;
     transition: color var(--dur) var(--ease);
   }
 
@@ -409,17 +345,18 @@ const showProjectMark = Boolean(
   }
 
   @media (min-width: 71rem) {
+    .brand {
+      flex: none;
+    }
     .nav-desktop {
       display: block;
+      min-width: 0;
     }
     .hamburger {
       display: none;
     }
     .brand {
       max-width: none;
-    }
-    .brand__logo {
-      height: 50px;
     }
   }
 </style>

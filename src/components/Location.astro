@@ -138,11 +138,13 @@ const locationImage = verified(media.locationImage);
                   <span class="amenity__meta">
                     {[verified(item.distance), verified(item.time)].filter(Boolean).join(' · ')}
                   </span>
-                  {item.band && (
-                    <span class={`amenity__band amenity__band--${item.band}`}>
-                      {item.band === 'within-1km' ? 'Within 1 km' : '1 – 2 km'}
-                    </span>
-                  )}
+                  {/*
+                    The "Within 1 km" band chips are no longer rendered. In
+                    Singapore that phrase reads as a Primary 1 priority claim,
+                    the 1 km line cuts through this site block by block, and
+                    neither reinstated comparable site makes it. The bands stay
+                    recorded in project.ts for reference.
+                  */}
                   {item.quality === 'unverified' && (
                     <span class="badge badge--muted">To be confirmed</span>
                   )}

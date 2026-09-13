@@ -5,7 +5,6 @@
  * comfortable to read, not buried in 10px grey type.
  */
 import BaseLayout from './BaseLayout.astro';
-import { site } from '../data/site';
 import { agent } from '../data/agent';
 import { project } from '../data/project';
 import { formatDate, isoDate } from '../utils/format';
@@ -21,7 +20,7 @@ interface Props {
   showTemplateNotice?: boolean;
 }
 
-const { title, description, pathname, heading, intro, showTemplateNotice = true } = Astro.props;
+const { title, description, pathname, heading, intro } = Astro.props;
 
 const updated = formatDate(project.lastUpdated);
 const updatedIso = isoDate(project.lastUpdated);
@@ -67,14 +66,6 @@ const jsonLd = buildGraph({
         Operated by {agent.fullName}, CEA registration {agent.ceaRegistrationNumber},
         {' '}{agent.agencyName}, estate agency licence {agent.agencyLicenceNumber}.
       </p>
-
-      {
-        showTemplateNotice && (
-          <p class="notice legal__notice">
-            <strong>This is a template.</strong> {site.legal.legalTemplateNotice}
-          </p>
-        )
-      }
 
       <div class="legal__body">
         <slot />

@@ -4,101 +4,45 @@
  * ---------------------------------------------------------------------------
  * The first thing on the page, above the header, on every route.
  *
- * WHY IT IS AT THE TOP
- * A project-named domain, the project name as the page title and the
- * development's wordmark as the site's logo together read as the developer's
- * own site. Google Ads treats concealing or misstating who is behind a site as
- * an unacceptable business practice, and a footer disclosure at the bottom of a
- * very long page is not where a visitor arriving from an ad forms that
- * impression. It sat in the footer for a while; it belongs here.
+ * Shown IN FULL, with no expander. An earlier version put the licence number
+ * and the verification link behind a "Details" toggle. Both comparable sites
+ * that were reinstated after an Unacceptable Business Practices suspension
+ * (The Continuum, Lentor Gardens Residences) show the whole sentence, and a
+ * disclosure a visitor has to open is a disclosure some visitors never see.
  *
- * WHY IT IS A DISCLOSURE WIDGET AND NOT A WALL OF TEXT
- * Four lines of black bar was the ugliest thing on the page and it pushed the
- * hero down. This is a native <details> element: one compact line always
- * visible, the supporting detail one click away. No JavaScript, keyboard
- * operable, and it degrades to an open block if styling fails.
+ * Not dismissible. A notice that can be closed is a notice that was not shown.
  *
- * THE RULE THAT MAKES THAT SAFE — do not break it when editing.
- * Everything a visitor MUST see is in the <summary>, which cannot be collapsed
- * away: who operates the site, the CEA registration number, and that this is
- * NOT the official developer website. Only supplementary material sits inside
- * the expander — the agency licence number, the appointment, the register link.
- * Never move the "not the official developer website" clause into the fold; at
- * that point the disclosure becomes a thing the visitor has to go looking for,
- * which is the problem it exists to solve.
- *
- * It is not dismissible. A notice that can be closed is a notice that was not
- * shown.
+ * Rendered only when the identity is complete — a half-filled notice would look
+ * like a disclosure while failing to identify anyone.
  */
 import { agent, isPlaceholder } from '../data/agent';
-import { project } from '../data/project';
 import { site } from '../data/site';
 
-/*
- * The working name, not the registered one. "Goh Pei Chang Ethan" is what the
- * CEA register lists, but the registration NUMBER beside it is the unique
- * identifier a visitor searches on, and the registered name is stated on
- * /about-ethan. Leading with the name people know reads as a person rather
- * than as boilerplate.
- */
-const registered = agent.fullName;
 const cea = isPlaceholder(agent.ceaRegistrationNumber) ? null : agent.ceaRegistrationNumber;
 const licence = isPlaceholder(agent.agencyLicenceNumber) ? null : agent.agencyLicenceNumber;
 const register = isPlaceholder(agent.ceaPublicRegisterUrl) ? null : agent.ceaPublicRegisterUrl;
-
-/*
- * Rendered only when the identity is actually complete. A half-filled notice
- * would be worse than none: it would look like a disclosure while failing to
- * identify anyone.
- */
 const complete = Boolean(cea && licence && !site.legal.claimsOfficialDeveloperSite);
-
-/*
- * Where a signed appointment exists the notice says so, and drops the words
- * "not affiliated" — with a letter on file that phrase would be false. What
- * stays true either way, and is the part the policy is about, is that this is
- * not the developer's own website.
- */
-const auth = (
-  project as {
-    marketingAuthorisation?: { authorised: boolean; grantedBy: string; agency: string };
-  }
-).marketingAuthorisation;
-const appointed = auth?.authorised ? auth : null;
 ---
 
 {
   complete && (
-    <aside class="compliance" aria-label="Advertiser identity and independence notice">
-      <details class="compliance__box">
-        <summary class="compliance__summary">
-          <span class="compliance__lead">
-            <strong>Independent marketing website</strong> — operated by {registered}, CEA Reg. No.{' '}
-            {cea}, {agent.agencyName}. <strong>Not the official developer website.</strong>
-          </span>
-          <span class="compliance__toggle">Details</span>
-        </summary>
-
-        <div class="compliance__detail">
-          <p>
-            This website is operated by {registered}, a licensed real estate salesperson registered
-            with {agent.agencyName} under CEA Licence No. {licence}. It is not the official website
-            of the developer and is not operated by the developer.
-            {appointed
-              ? ` ${appointed.agency} is an authorised marketing agency for this development, appointed by ${appointed.grantedBy}.`
-              : ' It is not affiliated with, endorsed by, or operated by the developer.'}{' '}
-            All information is for general reference only.
-          </p>
-          {register && (
-            <p>
-              <a class="compliance__link" href={register} target="_blank" rel="noopener noreferrer">
-                Verify this registration on the CEA Public Register
-                <span class="visually-hidden"> (opens in a new tab)</span>
-              </a>
-            </p>
-          )}
-        </div>
-      </details>
+    <aside class="compliance" aria-label="Advertiser identity notice">
+      <p class="compliance__text container">
+        <strong>Important Notice:</strong> This is an independent property marketing website operated
+        by {agent.fullName} (CEA Reg. No. {cea}), a licensed salesperson with {agent.agencyName} (CEA
+        Licence No. {licence}). This is not the official developer website and is not operated by the
+        developer. All information is for general reference only.
+        {register && (
+          <>
+            {' '}
+            <a class="compliance__link" href={register} target="_blank" rel="noopener noreferrer">
+              Verify on CEA Register
+              <span aria-hidden="true"> ↗</span>
+              <span class="visually-hidden"> (opens in a new tab)</span>
+            </a>
+          </>
+        )}
+      </p>
     </aside>
   )
 }
@@ -109,81 +53,23 @@ const appointed = auth?.authorised ? auth : null;
     color: var(--c-on-inverse, #f4f1ea);
   }
 
-  .compliance__box {
-    max-width: var(--container, 76rem);
+  .compliance__text {
     margin: 0 auto;
-    padding: var(--sp-2) var(--sp-4);
-  }
-
-  .compliance__summary {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--sp-4);
-    cursor: pointer;
-    list-style: none;
+    padding-block: var(--sp-2);
     font-size: var(--step--1);
     line-height: 1.5;
+    text-align: center;
   }
 
-  /* Safari paints its own triangle without this. */
-  .compliance__summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .compliance__summary:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 3px;
-  }
-
-  .compliance__lead {
-    min-width: 0;
-  }
-
-  .compliance__lead strong {
+  .compliance__text strong {
     font-weight: 600;
-  }
-
-  .compliance__toggle {
-    flex: none;
-    font-size: var(--step--2);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
-    white-space: nowrap;
-  }
-
-  .compliance__toggle::after {
-    content: ' ▾';
-    text-decoration: none;
-  }
-
-  .compliance__box[open] .compliance__toggle::after {
-    content: ' ▴';
-  }
-
-  .compliance__detail {
-    margin-top: var(--sp-3);
-    padding-top: var(--sp-3);
-    border-top: 1px solid rgb(244 241 234 / 0.22);
-    font-size: var(--step--1);
-    line-height: 1.55;
-    max-width: 78ch;
-  }
-
-  .compliance__detail p {
-    margin: 0 0 var(--sp-2);
-  }
-
-  .compliance__detail p:last-child {
-    margin-bottom: 0;
   }
 
   .compliance__link {
     color: inherit;
     text-decoration: underline;
     text-underline-offset: 0.18em;
+    white-space: nowrap;
   }
 
   .compliance__link:hover,
@@ -192,12 +78,8 @@ const appointed = auth?.authorised ? auth : null;
   }
 
   @media (max-width: 47.99rem) {
-    .compliance__summary {
-      flex-direction: column;
-      gap: 4px;
-    }
-    .compliance__summary,
-    .compliance__detail {
+    .compliance__text {
+      text-align: left;
       font-size: var(--step--2);
     }
   }

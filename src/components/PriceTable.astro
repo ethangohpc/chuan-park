@@ -28,23 +28,19 @@ import { formatDate, isoDate } from '../utils/format';
 import { unitGroups, areaRange } from '../utils/unitGroups';
 
 const projectName = verified(project.name) ?? '[PROJECT NAME]';
-const { pricing, availability } = project;
+const { availability } = project;
 
-const startingPrice = verified(pricing.startingPrice);
 /*
- * A "from" psf is what buyers compare between launches, so it leads. A range
- * is accepted as a fallback for the same slot — if only a range is on the price
- * list, showing it beats showing nothing — and the label follows whichever is
- * in use, so "from" is never printed against a range.
+ * No price figures are published on the page. Both comparable sites that were
+ * reinstated after an Unacceptable Business Practices suspension show none: a
+ * "from" price ages between phases and, beside a psf taken from a different
+ * unit, creates a misleading impression. The config values stay recorded in
+ * project.ts for reference; the price list is sent on request instead.
  */
-const psfFrom = verified(pricing.psfFrom);
-const psfRange = verified(pricing.psfRange);
-const psf = psfFrom ?? psfRange;
-const psfLabel = psfFrom ? 'Price psf from' : 'Price psf';
 /** The retail unit is listed only when the project chooses to market it. */
 const showRetail = availability.listRetail && (availability.shopsLeft ?? 0) > 0;
-const priceAsAt = formatDate(pricing.priceLastUpdated);
-const priceAsAtIso = isoDate(pricing.priceLastUpdated);
+const priceAsAt = formatDate(availability.asAt);
+const priceAsAtIso = isoDate(availability.asAt);
 
 const rows = unitGroups();
 ---
@@ -52,30 +48,11 @@ const rows = unitGroups();
 <section class="section" id="price" aria-labelledby="price-title">
   <div class="container">
     <SectionHeader
-      eyebrow={`${projectName} price`}
-      title={`${projectName} Price`}
-      lede="Indicative figures to help you gauge the range. Reconfirm everything against the latest developer-issued price list."
+      eyebrow="Unit types"
+      title="Unit Types & Availability"
+      lede="Current pricing is issued directly by the developer and changes with each release. Request the latest official price list below and Ethan will send it to you."
       id="price-title"
     />
-
-    {
-      (startingPrice || psf) && (
-        <div class="price__figures">
-          {startingPrice && (
-            <div class="price__figure">
-              <span class="price__label">Price from</span>
-              <strong class="price__value">{startingPrice}</strong>
-            </div>
-          )}
-          {psf && (
-            <div class="price__figure">
-              <span class="price__label">{psfLabel}</span>
-              <strong class="price__value">{psf}</strong>
-            </div>
-          )}
-        </div>
-      )
-    }
 
     <div
       class="price__table-wrap"
@@ -128,7 +105,7 @@ const rows = unitGroups();
     {
       priceAsAt && (
         <p class="fineprint price__asat">
-          Prices and availability shown are as at{' '}
+          Availability shown is as at{' '}
           <time datetime={priceAsAtIso ?? undefined}>{priceAsAt}</time>.
         </p>
       )
@@ -145,7 +122,7 @@ const rows = unitGroups();
     */
     }
     <p class="fineprint price__disclaimer">
-      {site.legal.pricingDisclaimer} Figures exclude Buyer’s Stamp Duty, Additional Buyer’s Stamp Duty
+      {site.legal.pricingDisclaimer} Prices exclude Buyer’s Stamp Duty, Additional Buyer’s Stamp Duty
       where applicable, legal fees and other transaction costs. Nothing on this page is an offer or a
       contract. E&amp;OE.
     </p>

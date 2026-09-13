@@ -43,11 +43,15 @@ const PLAN_HEIGHT = 1160;
 const asAt = formatDate(availability.asAt);
 const asAtIso = isoDate(availability.asAt);
 
-/** "12 units left" / "Sold out" / "On request" — the label carries the meaning. */
+/**
+ * "Available" / "Sold out" / "On request". Never a unit count: a "5 units left"
+ * badge is stale the day after it is published and reads as manufactured
+ * scarcity. Neither reinstated comparable site shows counts.
+ */
 function statusLabel(left: number | null): string {
   if (left === null) return 'On request';
   if (left === 0) return 'Sold out';
-  return `${left} unit${left === 1 ? '' : 's'} left`;
+  return 'Available';
 }
 function statusKind(left: number | null): 'available' | 'sold' | 'unknown' {
   if (left === null) return 'unknown';

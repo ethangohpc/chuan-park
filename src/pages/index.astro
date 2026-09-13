@@ -4,7 +4,7 @@
  * ---------------------------------------------------------------------------
  * Section order is fixed and matches the navigation:
  * Hero → About → Location → Price → Floorplans → Brochure → Gallery →
- * Developer → FAQ → Contact → Footer.
+ * Developer → About This Website → FAQ → Contact → Footer.
  *
  * The adviser's identification lives inside the Contact section rather than in
  * a section of its own — it belongs next to the form it vouches for.
@@ -23,6 +23,7 @@ import Floorplans from '../components/Floorplans.astro';
 import Brochure from '../components/Brochure.astro';
 import Gallery from '../components/Gallery.astro';
 import Developer from '../components/Developer.astro';
+import AboutWebsite from '../components/AboutWebsite.astro';
 import Faq from '../components/Faq.astro';
 import ContactForm from '../components/ContactForm.astro';
 import Lightbox from '../components/Lightbox.astro';
@@ -54,22 +55,18 @@ const advertiser = agent.fullName;
 const cea = verified(agent.ceaRegistrationNumber);
 
 /*
- * Project first, advertiser second.
- *
- * Leading with the salesperson pushed the project name out of a browser tab,
- * which truncates to roughly 25 characters — every tab read "Ethan Goh |
- * Huttons A…" and nothing identified the development. This keeps the project
- * where a visitor scanning tabs and search results expects it, while the
- * advertiser and CEA number remain in the title rather than being dropped:
- * "Chuan Park — Marketed by Ethan Goh | Huttons Asia Pte Ltd (R064895H)".
+ * Advertiser first: "Ethan Goh | Huttons Asia Pte Ltd (R064895H) | Marketing
+ * Chuan Park". This is the exact pattern of both comparable sites reinstated
+ * after an Unacceptable Business Practices suspension. A project-first title
+ * reads as the project's own site in tabs, search results and link previews.
  */
-const title = `${projectName} — Marketed by ${advertiser} | ${agent.agencyName}${cea ? ` (${cea})` : ''}`;
+const title = `${advertiser} | ${agent.agencyName}${cea ? ` (${cea})` : ''} | Marketing ${projectName}`;
 
 const description =
   `${advertiser}, licensed real estate salesperson${cea ? ` (CEA Reg. No. ${cea})` : ''} with ` +
   `${agent.agencyName}, marketing ${projectName} — a new private residential launch in ` +
   `${location}${district ? `, ${district}` : ''}. Independent marketing website, not the official ` +
-  `developer website. Indicative pricing, unit types, floorplans and showflat enquiries.`;
+  `developer website. Unit types, availability, floorplans and showflat enquiries.`;
 
 const jsonLd = buildGraph({
   pathname: '/',
@@ -90,6 +87,7 @@ const jsonLd = buildGraph({
   <Brochure />
   <Gallery />
   <Developer />
+  <AboutWebsite />
   <Faq />
   <ContactForm />
   <Lightbox />

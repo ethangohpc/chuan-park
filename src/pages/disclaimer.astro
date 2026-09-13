@@ -8,6 +8,11 @@ import { project, verified } from '../data/project';
 
 const projectName = verified(project.name) ?? 'the development featured on this website';
 const developer = verified(project.developer);
+const appointed = (
+  project as { marketingAuthorisation?: { authorised: boolean; grantedBy: string; agency: string } }
+).marketingAuthorisation?.authorised
+  ? (project as unknown as { marketingAuthorisation: { grantedBy: string; agency: string } }).marketingAuthorisation
+  : null;
 ---
 
 <LegalLayout
@@ -22,11 +27,11 @@ const developer = verified(project.developer);
     <strong>{site.legal.independentDisclosureFull}</strong>
   </p>
   <p>
-    This website is not operated by, endorsed by, or affiliated with
-    {developer ? ` ${developer}` : ' the developer'} or any of its related entities. No claim is made
-    that the operator is the exclusive salesperson for {projectName}, or that {agent.agencyName} is the
-    exclusive marketing agency for it. Where the words “official”, “exclusive” or “direct developer” do
-    not appear on this website, that is deliberate.
+    This website is not the official developer website and is not operated or endorsed by
+    {developer ? ` ${developer}` : ' the developer'}.
+    {appointed && ` ${appointed.agency} has been appointed by ${appointed.grantedBy} as an authorised marketing agency for ${projectName}, and ${agent.fullName} markets the development as a salesperson registered under ${appointed.agency}.`}
+    {' '}No claim is made that the operator is the exclusive salesperson for {projectName}, or that
+    {' '}{agent.agencyName} is the exclusive marketing agency for it.
   </p>
 
   <h2>2. General information only</h2>

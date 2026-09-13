@@ -117,11 +117,12 @@ export const site: SiteConfig = {
   navigation: [
     { label: 'About', href: '#about', id: 'about' },
     { label: 'Location', href: '#location', id: 'location' },
-    { label: 'Price', href: '#price', id: 'price' },
+    { label: 'Availability', href: '#price', id: 'price' },
     { label: 'Floorplans', href: '#floorplans', id: 'floorplans' },
     { label: 'Brochure', href: '#brochure', id: 'brochure' },
     { label: 'Gallery', href: '#gallery', id: 'gallery' },
     { label: 'About the Developer', href: '#developer', id: 'developer' },
+    { label: 'About This Website', href: '#about-website', id: 'about-website' },
     { label: 'FAQ', href: '#faq', id: 'faq' },
     { label: 'Contact', href: '#contact', id: 'contact' },
   ],

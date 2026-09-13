@@ -312,19 +312,54 @@ test.describe('Floorplans and gallery', () => {
     expect(priceRows.slice(0, titles.length)).toEqual(titles);
   });
 
-  test('availability is dated and never shows a guessed number', async ({ page }) => {
+  test('availability is dated and never shows a unit count', async ({ page }) => {
     await page.goto('/#floorplans');
-    // Every layout must carry an explicit status, and "On request" is the only
-    // permitted rendering when the split is unknown.
+    // Every layout carries an explicit status. Unit counts ("5 units left") are
+    // not shown: they go stale immediately and read as manufactured scarcity.
     const statuses = await page
       .locator('.fp-card__body .badge')
       .evaluateAll((els) => els.map((e) => e.textContent!.trim()));
     expect(statuses.length).toBeGreaterThan(0);
     for (const s of statuses) {
-      expect(s).toMatch(/^(Sold out|On request|\d+ units? left)$/);
+      expect(s).toMatch(/^(Available|Sold out|On request)$/);
     }
     // Availability must be stamped with the date it was taken.
     await expect(page.locator('#floorplans .fp-foot time')).toHaveCount(1);
+  });
+});
+
+test.describe('Advertiser identity', () => {
+  test('the header brand is the salesperson, not a project or developer mark', async ({ page }) => {
+    await page.goto('/');
+    const brand = page.locator('.site-header .brand');
+    await expect(brand).toContainText('Ethan Goh');
+    await expect(brand.locator('img')).toHaveCount(0);
+    await expect(page).toHaveTitle(/^Ethan Goh \| Huttons Asia Pte Ltd/);
+  });
+
+  test('the hero names the advertiser before the headline and shows no price', async ({ page }) => {
+    await page.goto('/');
+    const order = await page.evaluate(() => {
+      const m = document.querySelector('.hero__marketed');
+      const h = document.querySelector('.hero__title');
+      return m && h ? Boolean(m.compareDocumentPosition(h) & Node.DOCUMENT_POSITION_FOLLOWING) : null;
+    });
+    expect(order).toBe(true);
+    await expect(page.locator('body')).not.toContainText(/S\$\s?\d/);
+  });
+
+  test('the identity notice is fully visible with no expander', async ({ page }) => {
+    await page.goto('/');
+    const notice = page.locator('.compliance');
+    await expect(notice).toBeVisible();
+    await expect(notice).toContainText('not the official developer website');
+    await expect(notice.locator('details, summary')).toHaveCount(0);
+  });
+
+  test('About This Website is linked from the navigation and names the operator', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#about-website')).toContainText('Ethan Goh');
+    await expect(page.locator('a[href="#about-website"]').first()).toBeAttached();
   });
 });
 

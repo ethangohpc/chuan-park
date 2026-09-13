@@ -4,8 +4,9 @@
  * ---------------------------------------------------------------------------
  * Specific, ad-relevant headline; factual sub-line; the facts a visitor
  * arriving from a "[project] price" search needs immediately; two CTAs; and the
- * last-updated date. The independent-website disclosure is carried by the
- * footer, the mobile menu and every legal page.
+ * last-updated date. The advertiser is named in an eyebrow line directly
+ * ABOVE the headline, so the first words a visitor reads say who is marketing
+ * the project before they read the project's name.
  *
  * The image is served as <picture> with a separate mobile crop, explicit
  * dimensions, fetchpriority="high" and no animation — it is the LCP element.
@@ -55,13 +56,14 @@ const heroFacts = [
    */
 ].filter((f): f is { label: string; value: string } => Boolean(f.value));
 
+/* "Marketed by …" — omitted entirely unless the CEA details are filled in,
+   so it can never render as a half-finished disclosure. */
+const marketedBy = agentPlaceholder(agent.ceaRegistrationNumber)
+  ? null
+  : `Marketed by ${agent.fullName} · ${agent.agencyName} · CEA ${agent.ceaRegistrationNumber}`;
+
 /* Opens WhatsApp directly, so it is tracked as click_whatsapp rather than as a
    second book_showflat — the visitor is doing a different thing. */
-/* "Presented by …" — omitted entirely unless the CEA details are filled in,
-   so it can never render as a half-finished disclosure. */
-const presentedBy = agentPlaceholder(agent.ceaRegistrationNumber)
-  ? null
-  : `Presented by ${agent.fullName} · ${agent.agencyName} · CEA ${agent.ceaRegistrationNumber}`;
 
 const wa = whatsappHref(
   interpolate(project.contact.whatsappMessages.general, { 'PROJECT NAME': projectName })
@@ -93,6 +95,16 @@ const media = project.media;
   </div>
 
   <div class="hero__content container">
+    {
+      /*
+       * Above the headline, not at the foot of the hero. Both comparable sites
+       * that were reinstated after an Unacceptable Business Practices
+       * suspension put the salesperson here. Keep it at this position and at
+       * least this size.
+       */
+      marketedBy && <p class="hero__marketed">{marketedBy}</p>
+    }
+
     <h1 class="hero__title">{headline}</h1>
 
     {subheadline && <p class="hero__sub">{subheadline}</p>}
@@ -143,20 +155,6 @@ const media = project.media;
         )
       }
     </div>
-
-    {
-      /*
-       * Sits at the foot of the hero, where the last-updated line sits on the
-       * other site.
-       *
-       * With the identity notice moved to the footer and the header line
-       * removed, this is the only place the advertiser is named above the fold.
-       * It is what stops the development's own wordmark and imagery reading as
-       * the developer's own site. Do not remove it without putting the notice
-       * back at the top.
-       */
-      presentedBy && <p class="hero__presented">{presentedBy}</p>
-    }
 
     {
       /*
@@ -257,22 +255,14 @@ const media = project.media;
     max-width: 62rem;
   }
 
-  /*
-   * Deliberately identical to .hero__updated — same size, same colour, same
-   * case. It was already --step--1; the uppercase and letter-spacing were what
-   * made it read as larger and louder than the line beneath it.
-   *
-   * NOT smaller than this. --step--1 is the fine print this page already uses,
-   * and a required disclosure set smaller than the surrounding fine print
-   * starts to look like something being tucked away — which is the same policy
-   * area that caused the suspension. Small and unobtrusive is fine; smaller
-   * than everything around it is not.
-   */
-  .hero__presented {
+  .hero__marketed {
     margin: 0;
-    margin-top: var(--sp-2);
     font-size: var(--step--1);
-    color: var(--c-on-inverse-2);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-on-inverse);
+    max-width: 60ch;
   }
 
   .hero__title {

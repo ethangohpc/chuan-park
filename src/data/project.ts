@@ -510,11 +510,12 @@ export const project = {
     groups: [
       {
         title: 'Getting around',
+        intro: 'Approximate and unverified. Travel times vary with traffic and are not guaranteed.',
         items: [
           {
             name: 'Lorong Chuan (Circle Line)',
             distance: '',
-            time: '2 min walk',
+            time: 'approx. 2 min walk',
             quality: 'approximate',
             /*
              * Ethan's own figure, 22 Aug 2026, and it is the one the About copy
@@ -540,7 +541,7 @@ export const project = {
           {
             name: 'Central Expressway (CTE) and Pan Island Expressway (PIE)',
             distance: '',
-            time: '1 – 2 min drive',
+            time: 'short drive (approx.)',
             quality: 'approximate',
             // The sales kit also flags heavy peak-hour traffic on both.
           },
@@ -571,6 +572,7 @@ export const project = {
          * parent is counting on, for the specific block, before repeating it.
          */
         title: 'Schools',
+        intro: 'School information is provided for general reference only and does not guarantee admission. Please verify independently with MOE and OneMap.',
         items: [
           {
             name: 'St Gabriel’s Primary School',
@@ -853,17 +855,18 @@ export const project = {
   content: {
     heroHeadline: 'Chuan Park',
     /*
-     * The development's own line, from the cover of the preview catalogue. It
-     * is the project's positioning rather than a claim of our own, which is why
-     * it can sit under the headline without becoming something that needs
-     * verifying.
+     * Descriptive of what THIS page offers. It was the developer's own slogan
+     * from the catalogue cover ("Tranquil nature amidst urban convenience."),
+     * which made the hero read as the developer's launch page. Do not put a
+     * developer tagline back here.
      */
-    heroSubheadline: 'Tranquil nature amidst urban convenience.',
+    heroSubheadline:
+      'Explore floorplans, availability and the latest brochure for Chuan Park in Lorong Chuan. Book a showflat viewing to discuss unit types, pricing and next steps.',
     heroSupporting: '',
 
     overview: [
       'Chuan Park is located along Lorong Chuan in District 19 — a 99-year leasehold, brand-new condominium by established developer Kingsford.',
-      'Chuan Park is only a 2-minute walk to Lorong Chuan MRT on the Circle Line. This mega development of 916 units offers 2- to 5-bedroom unit types with efficient layouts and modern design. Prices start from S$2,001,000, subject to availability.',
+      'Chuan Park is an approximately 2-minute walk from Lorong Chuan MRT on the Circle Line. The development has 916 residential units across 2- to 5-bedroom types. The latest developer price list is sent on request.',
     ],
 
     /*
@@ -1193,15 +1196,15 @@ export const project = {
    */
   faq: [
     {
-      question: 'What is the indicative price of [PROJECT NAME]?',
+      question: 'How can I obtain the latest price list?',
       answer:
-        'Prices start from S$2,001,000 for a 743 sqft 2 Bedroom + Study, and from S$2,370 psf. As at 22 August 2026 the one remaining 2 Bedroom, an 829 sqft top-storey unit, was priced from S$2,066,700, and the remaining 3 Bedroom units of 1,206 to 1,485 sqft from S$3,234,900. Prices are indicative, apply only to the units still available, and are revised between sales phases. The developer-issued price list is the only confirmation, and is sent on request.',
+        'Current pricing is issued directly by the developer and changes with each release, so it is not published on this page. Request the latest developer-issued price list through the form in the Contact section or by WhatsApp, and Ethan will send it to you.',
       includeInStructuredData: true,
     },
     {
-      question: 'How many units are still available?',
+      question: 'Which unit types are still available?',
       answer:
-        'Twenty-seven of the 918 units remained as at 22 August 2026: one 2 Bedroom, four 2 Bedroom + Study, twenty-one 3 Bedroom and one shop unit. The 4 and 5 Bedroom collections are fully sold. Availability moves continuously and is confirmed only against the developer’s current unit chart at the point of booking.',
+        'As at 22 August 2026, 2 Bedroom, 2 Bedroom + Study and 3 Bedroom units remained available; the 4 and 5 Bedroom types are fully sold. Availability changes continuously and is confirmed only against the developer’s current unit chart at the point of booking.',
       includeInStructuredData: true,
     },
     {
@@ -1232,6 +1235,24 @@ export const project = {
       question: 'What is the tenure and when is completion expected?',
       answer:
         'The tenure is 99 years. The expected date of Temporary Occupation Permit is Q4 2027. The estimated date of vacant possession is 31 December 2028 and the estimated date of legal completion is 31 December 2031; these are the dates set out in the sale documents and they are the ones that bind. Confirm them, together with the lease commencement date, in the Sale and Purchase Agreement.',
+      includeInStructuredData: true,
+    },
+    {
+      question: 'Who is the developer?',
+      answer:
+        'Chuan Park is developed by Chuan Park Development Pte Ltd (developer’s licence C1491), a project company of Kingsford Development.',
+      includeInStructuredData: true,
+    },
+    {
+      question: 'Is this the official developer website?',
+      answer:
+        'No. This is an independent property marketing website operated by Ethan Goh (CEA Reg. No. R064895H), a licensed salesperson with Huttons Asia Pte Ltd (CEA Licence No. L3008899K). It is not operated by the developer.',
+      includeInStructuredData: true,
+    },
+    {
+      question: 'Who operates this website?',
+      answer:
+        'This website is operated by Ethan Goh of Huttons Asia Pte Ltd, not the project developer. Huttons Asia Pte Ltd has been appointed by Kingsford Huray Development Pte Ltd as an authorised marketing agency for Chuan Park, and its registered salespersons — including Ethan Goh — are authorised to market, advertise and generate enquiries for the development through online and offline channels.',
       includeInStructuredData: true,
     },
   ] as FaqItem[],

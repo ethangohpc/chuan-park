@@ -1,0 +1,65 @@
+---
+/**
+ * ABOUT THIS WEBSITE
+ * ---------------------------------------------------------------------------
+ * A section of its own, linked from the main navigation, answering the one
+ * question a Google Ads reviewer is asking: who operates this site, and what is
+ * their relationship to the development?
+ *
+ * Modelled on "About This Website" on Lentor Gardens Residences, which was
+ * reinstated after an Unacceptable Business Practices suspension and runs on
+ * the same Kingsford appointment letter.
+ *
+ * The appointment sentence renders ONLY when `project.marketingAuthorisation`
+ * is on record. Without a letter it must not appear — claiming an appointment
+ * that does not exist is exactly the misrepresentation this section prevents.
+ */
+import SectionHeader from './SectionHeader.astro';
+import { agent, isPlaceholder } from '../data/agent';
+import { project, verified } from '../data/project';
+
+const projectName = verified(project.name) ?? 'this development';
+const developer = verified(project.developer);
+const register = isPlaceholder(agent.ceaPublicRegisterUrl) ? null : agent.ceaPublicRegisterUrl;
+
+const auth = (
+  project as { marketingAuthorisation?: { authorised: boolean; grantedBy: string; agency: string } }
+).marketingAuthorisation;
+const appointed = auth?.authorised ? auth : null;
+---
+
+<section class="section section--alt" id="about-website" aria-labelledby="about-website-title">
+  <div class="container">
+    <SectionHeader eyebrow="About this website" title="Who Operates This Site" id="about-website-title" />
+
+    <div class="prose aw">
+      <p>
+        Independently operated by {agent.fullName} (CEA Reg. No. {agent.ceaRegistrationNumber}),
+        licensed with {agent.agencyName} (CEA Lic. No. {agent.agencyLicenceNumber}).
+        {
+          appointed &&
+            ` ${appointed.agency} has been appointed by ${appointed.grantedBy} as an authorised marketing agency for ${projectName}. Under that appointment, ${appointed.agency} and its registered salespersons are authorised to market, advertise and generate enquiries for the development through online and offline channels.`
+        }
+        {' '}This is not the developer&#8217;s official website{developer ? ` and is not operated by ${developer}` : ''} —
+        pricing and availability are for general reference only.
+      </p>
+      {
+        register && (
+          <p>
+            <a href={register} target="_blank" rel="noopener noreferrer">
+              Verify {agent.fullName}&#8217;s registration on the CEA Public Register
+              <span aria-hidden="true"> ↗</span>
+              <span class="visually-hidden"> (opens in a new tab)</span>
+            </a>
+          </p>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .aw {
+    max-width: var(--measure, 68ch);
+  }
+</style>
